@@ -32,6 +32,7 @@ import time
 import os
 import errno
 import signal
+from collections import defaultdict
 
 
 class HostStatus:
@@ -462,3 +463,26 @@ def retry(func, expectedException=Exception, tries=None,
                 raise
 
             time.sleep(sleep)
+
+
+def xml2dict(tree):
+    d = {tree.tag: {} if tree.attrib else None}
+    children = list(tree)
+    if children:
+        dd = defaultdict(list)
+        for dc in map(xml2dict, children):
+            for k, v in dc.iteritems():
+                dd[k].append(v)
+        d = {tree.tag: {}}
+        for k, v in dd.iteritems():
+            d[tree.tag][k] = v[0] if len(v) == 1 else v
+    if tree.attrib:
+        d[tree.tag].update((k, v) for k, v in tree.attrib.iteritems())
+    if tree.text:
+        text = tree.text.strip()
+        if children or tree.attrib:
+            if text:
+                d[tree.tag]['#text'] = text
+        else:
+            d[tree.tag] = text
+    return d

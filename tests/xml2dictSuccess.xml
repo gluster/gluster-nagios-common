@@ -1,0 +1,10 @@
+			<timestamp date="2014-03-18" time="13:53:01" utc="1" interval="60">
+				<network per="second">
+					<net-dev iface="wlp3s0" rxpck="0.00" txpck="0.00" rxkB="0.00" txkB="0.00" rxcmp="0.00" txcmp="0.00" rxmcst="0.00"/>
+					<net-dev iface="lo" rxpck="0.00" txpck="0.00" rxkB="0.00" txkB="0.00" rxcmp="0.00" txcmp="0.00" rxmcst="0.00"/>
+					<net-dev iface="virbr0-nic" rxpck="0.00" txpck="0.00" rxkB="0.00" txkB="0.00" rxcmp="0.00" txcmp="0.00" rxmcst="0.00"/>
+					<net-dev iface="virbr0" rxpck="0.00" txpck="0.00" rxkB="0.00" txkB="0.00" rxcmp="0.00" txcmp="0.00" rxmcst="0.00"/>
+					<net-dev iface="enp0s26u1u2" rxpck="0.13" txpck="0.25" rxkB="0.01" txkB="0.03" rxcmp="0.00" txcmp="0.00" rxmcst="0.00"/>
+					<net-dev iface="em1" rxpck="0.00" txpck="0.00" rxkB="0.00" txkB="0.00" rxcmp="0.00" txcmp="0.00" rxmcst="0.00"/>
+				</network>
+			</timestamp>

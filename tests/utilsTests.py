@@ -19,6 +19,7 @@
 #
 
 import errno
+import xml.etree.cElementTree as etree
 
 from testrunner import GlusterNagiosTestCase as TestCaseBase
 from glusternagios import utils
@@ -76,3 +77,72 @@ class ExecCmdTests(TestCaseBase):
             (rc, out, err) = utils.execCmd(["unknown"])
 
         self.assertRaises(OSError, _runUnknown)
+
+
+class xml2dictTests(TestCaseBase):
+    def testSuccess(self):
+        expectedDict = {'timestamp':
+                        {'date': '2014-03-18',
+                         'interval': '60',
+                         'network': {'net-dev': [{'iface': 'wlp3s0',
+                                                  'rxcmp': '0.00',
+                                                  'rxkB': '0.00',
+                                                  'rxmcst': '0.00',
+                                                  'rxpck': '0.00',
+                                                  'txcmp': '0.00',
+                                                  'txkB': '0.00',
+                                                  'txpck': '0.00'},
+                                                 {'iface': 'lo',
+                                                  'rxcmp': '0.00',
+                                                  'rxkB': '0.00',
+                                                  'rxmcst': '0.00',
+                                                  'rxpck': '0.00',
+                                                  'txcmp': '0.00',
+                                                  'txkB': '0.00',
+                                                  'txpck': '0.00'},
+                                                 {'iface': 'virbr0-nic',
+                                                  'rxcmp': '0.00',
+                                                  'rxkB': '0.00',
+                                                  'rxmcst': '0.00',
+                                                  'rxpck': '0.00',
+                                                  'txcmp': '0.00',
+                                                  'txkB': '0.00',
+                                                  'txpck': '0.00'},
+                                                 {'iface': 'virbr0',
+                                                  'rxcmp': '0.00',
+                                                  'rxkB': '0.00',
+                                                  'rxmcst': '0.00',
+                                                  'rxpck': '0.00',
+                                                  'txcmp': '0.00',
+                                                  'txkB': '0.00',
+                                                  'txpck': '0.00'},
+                                                 {'iface': 'enp0s26u1u2',
+                                                  'rxcmp': '0.00',
+                                                  'rxkB': '0.01',
+                                                  'rxmcst': '0.00',
+                                                  'rxpck': '0.13',
+                                                  'txcmp': '0.00',
+                                                  'txkB': '0.03',
+                                                  'txpck': '0.25'},
+                                                 {'iface': 'em1',
+                                                  'rxcmp': '0.00',
+                                                  'rxkB': '0.00',
+                                                  'rxmcst': '0.00',
+                                                  'rxpck': '0.00',
+                                                  'txcmp': '0.00',
+                                                  'txkB': '0.00',
+                                                  'txpck': '0.00'}],
+                                     'per': 'second'},
+                         'time': '13:53:01',
+                         'utc': '1'}}
+        with open("xml2dictSuccess.xml") as f:
+            out = f.read()
+            tree = etree.fromstring(out)
+            outDict = utils.xml2dict(tree)
+        self.assertEquals(expectedDict, outDict)
+
+    def testAttributeError(self):
+        def _xml2dict():
+            utils.xml2dict("not an etree object")
+
+        self.assertRaises(AttributeError, _xml2dict)

@@ -23,6 +23,7 @@ test_modules = \
 	$(NULL)
 
 dist_glusternagioscommontests_DATA = \
+	xml2dictSuccess.xml \
 	$(NULL)
 
 dist_glusternagioscommontests_PYTHON = \
