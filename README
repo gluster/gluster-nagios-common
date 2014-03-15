@@ -1,14 +1,13 @@
 
-Nagios Gluster Add-ons:
+Nagios Gluster Common:
 =======================
-Nagios plugin, scripts, configuration files etc for gluster nodes.
-
+Common libraries, tools, configurations for Gluster node and Nagios
+server add-ons
 
 Installation
 ============
-The Nagios Gluster Add-ons can be used by following the standard
-autotools installation process, documented in the INSTALL file. As a
-quick start you can do
+This can be used by following the standard autotools installation
+process, documented in the INSTALL file. As a quick start you can do
 
    ./configure --prefix=/usr --sysconfdir=/etc \
         --localstatedir=/var --libdir=/usr/lib
@@ -18,7 +17,7 @@ quick start you can do
 
 Packaging
 =========
-The 'nagios-gluster-addons.spec' file demonstrates how to distribute
+The 'nagios-gluster-common.spec' file demonstrates how to distribute
 this as an RPM package.
 
 
