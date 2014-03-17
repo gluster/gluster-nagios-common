@@ -34,6 +34,32 @@ import errno
 import signal
 
 
+class HostStatus:
+    UP = 'UP'
+    DOWN = 'DOWN'
+    UNREACHABLE = 'UNREACHABLE'
+
+
+class HostStatusCode:
+    UP = 0
+    DOWN = 1
+    UNREACHABLE = 2
+
+
+class PluginStatus:
+    OK = 'OK'
+    WARNING = 'WARNING'
+    CRITICAL = 'CRITICAL'
+    UNKNOWN = 'UNKNOWN'
+
+
+class PluginStatusCode:
+    OK = 0
+    WARNING = 1
+    CRITICAL = 2
+    UNKNOWN = 3
+
+
 class CommandPath(object):
     def __init__(self, name, *args):
         self.name = name
