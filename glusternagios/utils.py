@@ -486,3 +486,20 @@ def xml2dict(tree):
         else:
             d[tree.tag] = text
     return d
+
+
+def convertSize(val, unitFrom, unitTo):
+    ''' Convert size from one unit to another
+    For example, KB to MB
+    '''
+    units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    unitFromIndex = units.index(unitFrom)
+    unitToIndex = units.index(unitTo)
+
+    if unitFromIndex < unitToIndex:
+        convFactor = 1 << (unitToIndex - unitFromIndex) * 10
+        return float(val) / convFactor
+    if unitFromIndex > unitToIndex:
+        convFactor = 1 << (unitFromIndex - unitToIndex) * 10
+        return float(val) * convFactor
+    return val

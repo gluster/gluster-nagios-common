@@ -146,3 +146,21 @@ class xml2dictTests(TestCaseBase):
             utils.xml2dict("not an etree object")
 
         self.assertRaises(AttributeError, _xml2dict)
+
+
+class convertsizeTests(TestCaseBase):
+    def testBytesToMB(self):
+        retVal = utils.convertSize(778999, 'B', 'MB')
+        assert (round(retVal, 2) == 0.74)
+
+    def testPBtoMB(self):
+        retVal = utils.convertSize(8, 'PB', 'MB')
+        assert (round(retVal, 0) == 8589934592)
+
+    def testInvalidInput(self):
+        with self.assertRaises(ValueError):
+            utils.convertSize(89, 'P', 'M')
+
+    def testMBToMB(self):
+        retVal = utils.convertSize(900, 'MB', 'MB')
+        assert (retVal == 900)
