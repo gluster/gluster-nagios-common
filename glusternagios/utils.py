@@ -104,6 +104,14 @@ setsidCmdPath = CommandPath("setsid",
 sudoCmdPath = CommandPath("sudo",
                           "/bin/sudo",
                           )
+lvsCmdPath = CommandPath("lvs",
+                         "/sbin/lvs",
+                         )
+vgsCmdPath = CommandPath("vgs",
+                         "/sbin/vgs",
+                         )
+pvsCmdPath = CommandPath("pvs",
+                         "/sbin/pvs")
 # Buffsize is 1K because I tested it on some use cases and 1K was fastest. If
 # you find this number to be a bottleneck in any way you are welcome to change
 # it
