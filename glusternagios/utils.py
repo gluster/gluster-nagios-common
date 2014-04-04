@@ -33,6 +33,7 @@ import os
 import errno
 import signal
 from collections import defaultdict
+import xml.etree.cElementTree as ET
 
 
 class HostStatus:
@@ -102,7 +103,7 @@ setsidCmdPath = CommandPath("setsid",
                             "/bin/setsid",
                             )
 sudoCmdPath = CommandPath("sudo",
-                          "/bin/sudo",
+                          "/usr/bin/sudo",
                           )
 lvsCmdPath = CommandPath("lvs",
                          "/sbin/lvs",
@@ -111,7 +112,10 @@ vgsCmdPath = CommandPath("vgs",
                          "/sbin/vgs",
                          )
 pvsCmdPath = CommandPath("pvs",
-                         "/sbin/pvs")
+                         "/sbin/pvs",
+                         )
+hostnameCmdPath = CommandPath("hostname", "/bin/hostname", )
+glusterCmdPath = CommandPath("gluster", "/usr/sbin/gluster")
 # Buffsize is 1K because I tested it on some use cases and 1K was fastest. If
 # you find this number to be a bottleneck in any way you are welcome to change
 # it
@@ -511,3 +515,9 @@ def convertSize(val, unitFrom, unitTo):
         convFactor = 1 << (unitFromIndex - unitToIndex) * 10
         return float(val) * convFactor
     return val
+
+
+def parseXml(xmldoc, searchStr):
+    root = ET.fromstring(xmldoc)
+    statusStr = root.findall(searchStr)
+    return statusStr
