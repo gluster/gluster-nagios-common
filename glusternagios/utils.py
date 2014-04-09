@@ -107,6 +107,7 @@ sudoCmdPath = CommandPath("sudo",
                           )
 hostnameCmdPath = CommandPath("hostname", "/bin/hostname", )
 glusterCmdPath = CommandPath("gluster", "/usr/sbin/gluster")
+trapCmdPath = CommandPath("snmptrap", "/usr/bin/snmptrap")
 # Buffsize is 1K because I tested it on some use cases and 1K was fastest. If
 # you find this number to be a bottleneck in any way you are welcome to change
 # it
@@ -512,3 +513,16 @@ def parseXml(xmldoc, searchStr):
     root = ET.fromstring(xmldoc)
     statusStr = root.findall(searchStr)
     return statusStr
+
+
+def getsnmpmanagers(path):
+    listofmanagers = []
+    with open(path, "r+") as mangerconfig:
+        for line in mangerconfig.readlines():
+            if line.startswith("#"):
+                continue
+            config = line.split()
+            if len(config) == 2:
+                listofmanagers.\
+                    append({'host': config[0], 'community': config[1]})
+    return listofmanagers
