@@ -19,6 +19,8 @@
 #
 
 test_modules = \
+	test_glustercli.py \
+	test_storage.py \
 	utilsTests.py \
 	$(NULL)
 

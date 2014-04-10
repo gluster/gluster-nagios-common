@@ -21,7 +21,6 @@
 import mock
 
 from testrunner import GlusterNagiosTestCase as TestCaseBase
-from glusternagios import storage
 import glusternagios
 
 
@@ -382,10 +381,10 @@ class TestStorageUtils(TestCaseBase):
                                              'LVM2_PV_NAME': '/dev/vda2',
                                              'LVM2_VG_NAME': 'vg_shubhnd'}}
         disk = glusternagios.storage.getDisksForBrick("server-1:"
-                                                             "/tmp/vol1-a")
+                                                      "/tmp/vol1-a")
         self.assertEquals(disk, "/dev/vda2")
 
-        disk = glusternagios.storage.getDisksForBrick(
-                    "server-1:/tmp/vol1-a",
-                    "/dev/mapper/vg_shubhnd-lv_root")
+        disk = glusternagios.storage.getDisksForBrick("server-1:/tmp/vol1-a",
+                                                      "/dev/mapper/"
+                                                      "vg_shubhnd-lv_root")
         self.assertEquals(disk, "/dev/vda2")
