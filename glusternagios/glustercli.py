@@ -82,6 +82,12 @@ class VolumeStatus:
     OFFLINE = 'OFFLINE'
 
 
+class VolumeQuotaStatus:
+    DISABLED = 'DISABLED'
+    OK = 'OK'
+    EXCEEDED = 'EXCEEDED'
+
+
 class TransportType:
     TCP = 'TCP'
     RDMA = 'RDMA'
@@ -430,6 +436,30 @@ def volumeInfo(volumeName=None, remoteServer=None):
         return _parseVolumeInfo(xmltree)
     except _etreeExceptions:
         raise GlusterCmdFailedException(err=[etree.tostring(xmltree)])
+
+
+def _parseVolumeQuotaStatus(out):
+    for line in out:
+        if line.startswith('quota: No quota') or line.find('not enabled') > -1:
+            return VolumeQuotaStatus.DISABLED
+        if line.find('Yes') > -1:
+            return VolumeQuotaStatus.EXCEEDED
+    return VolumeQuotaStatus.OK
+
+
+def volumeQuotaStatus(volumeName, remoteServer=None):
+    """
+    Returns:
+        STATUS
+    """
+    command = _getGlusterVolCmd() + ["quota", volumeName, "list"]
+    if remoteServer:
+        command += ['--remote-host=%s' % remoteServer]
+
+    rc, out, err = _execGluster(command)
+    if rc == 0:
+        return _parseVolumeQuotaStatus(out)
+    raise GlusterCmdFailedException(rc, err)
 
 
 def _parsePeerStatus(tree, gHostName, gUuid, gStatus):

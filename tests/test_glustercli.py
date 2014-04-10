@@ -21,6 +21,7 @@
 from testrunner import GlusterNagiosTestCase as TestCaseBase
 from glusternagios import glustercli as gcli
 import xml.etree.cElementTree as etree
+import mock
 
 
 class GlusterCliTests(TestCaseBase):
@@ -1057,3 +1058,45 @@ class GlusterCliTests(TestCaseBase):
         self._parseVolumeStatusDetail_test()
         self._parseVolumeStatusClients_test()
         self._parseVolumeStatusMem_test()
+
+    @mock.patch('glusternagios.utils.execCmd')
+    @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
+    def test_parseVolumeQuotaStatus(self, mock_glusterVolCmd, mock_execCmd,):
+        mock_glusterVolCmd.return_value = ["gluster", "volume"]
+        mock_execCmd.return_value = 0, ["quota command failed : "
+                                        "Quota is not enabled on "
+                                        "volume demo-test-vol"], None
+        status = gcli.volumeQuotaStatus("test-vol")
+        self.assertEquals(status, gcli.VolumeQuotaStatus.DISABLED)
+        mock_execCmd.return_value = 0, ["quota: No quota "
+                                        "configured on "
+                                        "volume demo-test-vol"], None
+        status = gcli.volumeQuotaStatus("test-vol")
+        self.assertEquals(status, gcli.VolumeQuotaStatus.DISABLED)
+        mock_execCmd.return_value = 0, self.__getQuotaOut(), None
+        status = gcli.volumeQuotaStatus("test-vol")
+        self.assertEquals(status, gcli.VolumeQuotaStatus.EXCEEDED)
+
+    @mock.patch('glusternagios.utils.execCmd')
+    @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
+    def test_parseVolumeQuotaStatusWhenException(self,
+                                                 mock_glusterVolCmd,
+                                                 mock_execCmd,):
+        mock_glusterVolCmd.return_value = ["gluster", "volume"]
+        mock_execCmd.return_value = -1, None, "err"
+        try:
+            gcli.volumeQuotaStatus("test-vol")
+            assert False
+        except gcli.GlusterCmdFailedException:
+            assert True
+
+    def __getQuotaOut(self):
+        return \
+            ["                  Path                   Hard-limit Soft-limit"
+             "   Used  Available  Soft-limit exceeded? Hard-limit exceeded?",
+             "-------------------------------------------------------------"
+             "--------------------------------------------------------------",
+             "/test                                    200.0KB       80%    "
+             " 200.0KB  0Bytes             No                   No",
+             "/test/rewe                               200.0KB       80%     "
+             "200.0KB  0Bytes             Yes                  Yes"]
