@@ -105,6 +105,8 @@ setsidCmdPath = CommandPath("setsid",
 sudoCmdPath = CommandPath("sudo",
                           "/usr/bin/sudo",
                           )
+hostnameCmdPath = CommandPath("hostname", "/bin/hostname", )
+glusterCmdPath = CommandPath("gluster", "/usr/sbin/gluster")
 # Buffsize is 1K because I tested it on some use cases and 1K was fastest. If
 # you find this number to be a bottleneck in any way you are welcome to change
 # it
