@@ -280,6 +280,7 @@ class TestStorageUtils(TestCaseBase):
                             'LVM2_PV_PE_COUNT': '12674'}}
         self.assertEquals(ret_val, value_to_verify)
 
+    @mock.patch('glusternagios.storage._getBrickMountPoints')
     @mock.patch('glusternagios.storage._getMountPoint')
     @mock.patch('glusternagios.storage._getProcMounts')
     @mock.patch('glusternagios.storage.glustercli.utils')
@@ -288,7 +289,8 @@ class TestStorageUtils(TestCaseBase):
                              mock_get_lv_details,
                              mock_utils,
                              mock_proc_mounts,
-                             mock_get_mount_point):
+                             mock_get_mount_point,
+                             mock_get_brick_mount_points):
         mock_get_lv_details.return_value = {'lv_root':
                                             {'LVM2_LV_NAME': 'lv_root',
                                              'LVM2_PV_NAME': '/dev/vda2',
@@ -333,16 +335,19 @@ class TestStorageUtils(TestCaseBase):
                                          '/proc/bus/usb': '/proc/bus/usb',
                                          'proc': '/proc'}
         mock_get_mount_point.return_value = "/"
+        mock_get_brick_mount_points.return_value = {'server-1:/tmp/vol1-a': "/"}
         bricks = glusternagios.storage.getBricksForDisk("/dev/vda2")
         self.assertEquals(bricks, ['server-1:/tmp/vol1-a'])
 
+    @mock.patch('glusternagios.storage._getBrickDeviceName')
     @mock.patch('glusternagios.storage._getLvDetails')
     @mock.patch('glusternagios.storage.glustercli.utils')
     @mock.patch('glusternagios.storage._getMountPoint')
     def testGetDisksForBrick(self,
                              mock_get_mount_point,
                              mock_utils,
-                             mock_get_lv_details):
+                             mock_get_lv_details,
+                             mock_get_brick_device_name):
         mock_get_mount_point.return_value = "/"
         tmp_out = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
                    '<cliOutput>',
@@ -383,6 +388,8 @@ class TestStorageUtils(TestCaseBase):
         disk = glusternagios.storage.getDisksForBrick("server-1:"
                                                       "/tmp/vol1-a")
         self.assertEquals(disk, "/dev/vda2")
+        mock_get_brick_device_name.return_value = "/dev/mapper/" \
+                                                  "vg_shubhnd-lv_root"
 
         disk = glusternagios.storage.getDisksForBrick("server-1:/tmp/vol1-a",
                                                       "/dev/mapper/"
