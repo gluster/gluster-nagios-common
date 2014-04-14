@@ -335,7 +335,8 @@ class TestStorageUtils(TestCaseBase):
                                          '/proc/bus/usb': '/proc/bus/usb',
                                          'proc': '/proc'}
         mock_get_mount_point.return_value = "/"
-        mock_get_brick_mount_points.return_value = {'server-1:/tmp/vol1-a': "/"}
+        mock_get_brick_mount_points.return_value = {'server-1:/tmp/vol1-a':
+                                                    "/"}
         bricks = glusternagios.storage.getBricksForDisk("/dev/vda2")
         self.assertEquals(bricks, ['server-1:/tmp/vol1-a'])
 
