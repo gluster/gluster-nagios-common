@@ -61,8 +61,10 @@ class GlusterCliTests(TestCaseBase):
         <transport>0</transport>
         <bricks>
           <brick>192.168.122.2:/tmp/m_b1<name>192.168.122.2:/tmp/m_b1</name>
+          <hostUuid>883c7829-d808-4a92-a414-db87061097b3</hostUuid>
           </brick>
           <brick>192.168.122.2:/tmp/m_b2<name>192.168.122.2:/tmp/m_b2</name>
+          <hostUuid>883c7829-d808-4a92-a414-db87061097b3</hostUuid>
           </brick>
         </bricks>
         <optCount>1</optCount>
@@ -87,6 +89,7 @@ class GlusterCliTests(TestCaseBase):
         <transport>1</transport>
         <bricks>
           <brick>192.168.122.2:/tmp/t_b1<name>192.168.122.2:/tmp/t_b1</name>
+          <hostUuid>883c7829-d808-4a92-a414-db87061097b3</hostUuid>
           </brick>
         </bricks>
         <optCount>0</optCount>
@@ -105,8 +108,10 @@ class GlusterCliTests(TestCaseBase):
                        'distCount': '2',
                        'bricksInfo': [{
                            'name': '192.168.122.2:/tmp/m_b1',
+                           'hostUuid': '883c7829-d808-4a92-a414-db87061097b3'
                        }, {
                            'name': '192.168.122.2:/tmp/m_b2',
+                           'hostUuid': '883c7829-d808-4a92-a414-db87061097b3'
                        }],
                        'options': {'auth.allow': '*'},
                        'replicaCount': '2',
@@ -121,6 +126,7 @@ class GlusterCliTests(TestCaseBase):
                        'distCount': '1',
                        'bricksInfo': [{
                            'name': '192.168.122.2:/tmp/t_b1',
+                           'hostUuid': '883c7829-d808-4a92-a414-db87061097b3'
                        }],
                        'options': {},
                        'replicaCount': '1',

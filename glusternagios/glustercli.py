@@ -403,7 +403,7 @@ def _parseVolumeInfo(tree):
             #it returns an empty list when gluster doesnot return uuid
             try:
                 brickDetail['name'] = d.find('name').text
-                #brickDetail['hostUuid'] = d.find('hostUuid').text
+                brickDetail['hostUuid'] = d.find('hostUuid').text
                 value['bricksInfo'].append(brickDetail)
             except AttributeError:
                 break
