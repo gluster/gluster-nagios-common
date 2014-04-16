@@ -229,9 +229,8 @@ class TestStorageUtils(TestCaseBase):
                             'LVM2_VG_MDA_USED_COUNT': '1',
                             'LVM2_VG_FREE': '0',
                             'LVM2_VG_SEQNO': '3',
-                            'LVM2_LV_PATH':
-                            ['/dev/vg_shubhnd/lv_root',
-                            '/dev/vg_shubhnd/lv_swap'],
+                            'LVM2_LV_PATH': ['/dev/vg_shubhnd/lv_root',
+                                             '/dev/vg_shubhnd/lv_swap'],
                             'LVM2_VG_FREE_COUNT': '0',
                             'LVM2_MAX_PV': '0',
                             'LVM2_MAX_LV': '0',

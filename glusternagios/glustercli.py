@@ -459,6 +459,9 @@ def volumeQuotaStatus(volumeName, remoteServer=None):
     rc, out, err = _execGluster(command)
     if rc == 0:
         return _parseVolumeQuotaStatus(out)
+    else:
+        if len(err) > 0 and err[0].find("Quota is disabled") > -1:
+            return VolumeQuotaStatus.DISABLED
     raise GlusterCmdFailedException(rc, err)
 
 
