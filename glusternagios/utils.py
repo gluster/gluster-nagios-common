@@ -517,7 +517,7 @@ def parseXml(xmldoc, searchStr):
 
 def getsnmpmanagers(path):
     listofmanagers = []
-    with open(path, "r+") as mangerconfig:
+    with open(path, "r") as mangerconfig:
         for line in mangerconfig.readlines():
             if line.startswith("#"):
                 continue
