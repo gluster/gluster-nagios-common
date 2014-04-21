@@ -1096,6 +1096,35 @@ class GlusterCliTests(TestCaseBase):
         except gcli.GlusterCmdFailedException:
             assert True
 
+    @mock.patch('glusternagios.utils.execCmd')
+    @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
+    def test_getVolumeHealSplitBrainStatusNonRepl(self, mock_glusterVolCmd,
+                                                  mock_execCmd,):
+        mock_glusterVolCmd.return_value = ["gluster", "volume"]
+        mock_execCmd.return_value = 2, None, ["Volume test-vol is not "
+                                              "of type replicate"]
+        expectedOut = {'test-vol':
+                       {'status': gcli.VolumeSplitBrainStatus.NOTAPPLICABLE,
+                        'unsyncedentries': 0}}
+        status = gcli.volumeHealSplitBrainStatus("test-vol")
+        print(status)
+        self.assertEquals(status, expectedOut)
+
+    @mock.patch('glusternagios.utils.execCmd')
+    @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
+    def test_getVolumeHealSplitBrainStatus(self, mock_glusterVolCmd,
+                                           mock_execCmd,):
+        mock_glusterVolCmd.return_value = ["gluster", "volume"]
+        mock_execCmd.return_value = (0,
+                                     self.__getGlusterSelfHealInfoResult(),
+                                     None)
+        expectedOut = {'test-vol':
+                       {'status': gcli.VolumeSplitBrainStatus.SPLITBRAIN,
+                        'unsyncedentries': 10}}
+        status = gcli.volumeHealSplitBrainStatus("test-vol")
+        print(status)
+        self.assertEquals(status, expectedOut)
+
     def __getQuotaOut(self):
         return \
             ["                  Path                   Hard-limit Soft-limit"
@@ -1106,3 +1135,24 @@ class GlusterCliTests(TestCaseBase):
              " 200.0KB  0Bytes             No                   No",
              "/test/rewe                               200.0KB       80%     "
              "200.0KB  0Bytes             Yes                  Yes"]
+
+    def __getGlusterSelfHealInfoResult(self):
+        return ["Gathering list of entries to be healed "
+                "on volume rep has been successful",
+                "",
+                "Brick node2:/bricks/b3",
+                "Status: Brick is Not connected",
+                "Number of entries: 0"
+                "",
+                "Brick node1:/bricks/b3",
+                "Number of entries: 10",
+                "/dir.7/file.5",
+                "/dir.8/file.3",
+                "/dir.9/file.5",
+                "/dir.2/file.4",
+                "/dir.9/file.4",
+                "/dir.4/file.1",
+                "/file.4",
+                "/dir.7/file.2",
+                "/dir.10/file.2",
+                "/dir.7/file.4"]

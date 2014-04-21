@@ -88,6 +88,12 @@ class VolumeQuotaStatus:
     EXCEEDED = 'EXCEEDED'
 
 
+class VolumeSplitBrainStatus:
+    NOTAPPLICABLE = 'NA'
+    OK = 'OK'
+    SPLITBRAIN = 'SPLITBRAIN'
+
+
 class TransportType:
     TCP = 'TCP'
     RDMA = 'RDMA'
@@ -445,6 +451,50 @@ def _parseVolumeQuotaStatus(out):
         if line.find('Yes') > -1:
             return VolumeQuotaStatus.EXCEEDED
     return VolumeQuotaStatus.OK
+
+
+def _parseVolumeSelfHealSplitBrainInfo(out):
+    value = {}
+    splitbrainentries = 0
+    for line in out:
+        if line.startswith('Number of entries:'):
+            entries = int(line.split(':')[1])
+            if entries > 0:
+                splitbrainentries += entries
+    if splitbrainentries > 0:
+        value['status'] = VolumeSplitBrainStatus.SPLITBRAIN
+    else:
+        value['status'] = VolumeSplitBrainStatus.OK
+    value['unsyncedentries'] = splitbrainentries
+    return value
+
+
+def volumeHealSplitBrainStatus(volumeName, remoteServer=None):
+    """
+    Arguments:
+       * VolumeName
+    Returns:
+        {VOLUMENAME: {'status': SELFHEALSTATUS,
+                      'unsyncedentries': ENTRYCOUNT}}
+    """
+    command = _getGlusterVolCmd() + ["heal", volumeName, "info"]
+    if remoteServer:
+        command += ['--remote-host=%s' % remoteServer]
+
+    rc, out, err = _execGluster(command)
+    volume = {}
+    value = {}
+    if rc == 0:
+        value = _parseVolumeSelfHealSplitBrainInfo(out)
+        volume[volumeName] = value
+        return volume
+    else:
+        if len(err) > 0 and err[0].find("is not of type replicate") > -1:
+            value['status'] = VolumeSplitBrainStatus.NOTAPPLICABLE
+            value['unsyncedentries'] = 0
+            volume[volumeName] = value
+            return volume
+    raise GlusterCmdFailedException(rc=rc, err=err)
 
 
 def volumeQuotaStatus(volumeName, remoteServer=None):
