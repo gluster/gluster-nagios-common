@@ -94,6 +94,13 @@ class VolumeSplitBrainStatus:
     SPLITBRAIN = 'SPLITBRAIN'
 
 
+class GeoRepStatus:
+    OK = 'OK'
+    NOT_STARTED = "NOT_STARTED"
+    FAULTY = "FAULTY"
+    PARTIAL_FAULTY = "PARTIAL_FAULTY"
+
+
 class TransportType:
     TCP = 'TCP'
     RDMA = 'RDMA'
@@ -467,6 +474,66 @@ def _parseVolumeSelfHealSplitBrainInfo(out):
         value['status'] = VolumeSplitBrainStatus.OK
     value['unsyncedentries'] = splitbrainentries
     return value
+
+
+def _parseVolumeGeoRepStatus(volumeName, out):
+    detail = ""
+    status = GeoRepStatus.OK
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1090910 - opened for xml
+    # output. For now parsing below string output format
+    # MASTER NODE                MASTER VOL    MASTER BRICK
+    # SLAVE                     STATUS     CHECKPOINT STATUS  CRAWL STATUS
+    slaves = {}
+    all_status = ['ACTIVE', 'PASSIVE', 'FAULTY', 'NOT STARTED', 'INITIALISING']
+    for line in out:
+        if any(gstatus in line.upper() for gstatus in all_status):
+            nodeline = line.split()
+            slave = nodeline[3]
+            if slaves.get(slave) is None:
+                slaves[slave] = {'nodecount': 0,
+                                 'faultcount': 0,
+                                 'notstarted': 0}
+            slaves[slave]['nodecount'] += 1
+            if GeoRepStatus.FAULTY in line.upper() \
+               or "NOT STARTED" in line.upper():
+                node = nodeline[0]
+                if GeoRepStatus.FAULTY == nodeline[4].upper():
+                    slaves[slave]['faultcount'] += 1
+                    tempstatus = GeoRepStatus.FAULTY
+                else:
+                    slaves[slave]['notstarted'] += 1
+                    tempstatus = GeoRepStatus.NOT_STARTED
+                detail += ("%s - %s - %s;" % (slave,
+                                              node,
+                                              tempstatus))
+    for slave, count_dict in slaves.iteritems():
+        if count_dict['nodecount'] == count_dict['faultcount']:
+            status = GeoRepStatus.FAULTY
+            break
+        elif count_dict['faultcount'] > 0:
+            status = GeoRepStatus.PARTIAL_FAULTY
+        elif count_dict['notstarted'] > 0 and status == GeoRepStatus.OK:
+            status = GeoRepStatus.NOT_STARTED
+    return {volumeName: {'status': status, 'detail': detail}}
+
+
+def volumeGeoRepStatus(volumeName, remoteServer=None):
+    """
+    Arguments:
+       * VolumeName
+    Returns:
+        {VOLUMENAME: {'status': GEOREPSTATUS,
+                      'detail': detailed message}}
+    """
+    command = _getGlusterVolCmd() + ["geo-replication", volumeName, "status"]
+    if remoteServer:
+        command += ['--remote-host=%s' % remoteServer]
+
+    rc, out, err = _execGluster(command)
+
+    if rc == 0:
+        return _parseVolumeGeoRepStatus(volumeName, out)
+    raise GlusterCmdFailedException(rc=rc, err=err)
 
 
 def volumeHealSplitBrainStatus(volumeName, remoteServer=None):

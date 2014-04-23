@@ -1125,6 +1125,54 @@ class GlusterCliTests(TestCaseBase):
         print(status)
         self.assertEquals(status, expectedOut)
 
+    @mock.patch('glusternagios.utils.execCmd')
+    @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
+    def test_getVolumeGeoRepStatus(self, mock_glusterVolCmd,
+                                   mock_execCmd,):
+        mock_glusterVolCmd.return_value = ["gluster", "volume"]
+        mock_execCmd.return_value = (0,
+                                     self.__getGlusterGeoRepStatusResult(),
+                                     None)
+        expectedOut = {'test-vol':
+                       {'status': gcli.GeoRepStatus.FAULTY,
+                        'detail': "10.70.43.68::slave-vol - "
+                                  "rhs3.novalocal - FAULTY;"
+                                  "10.70.43.68::slave-vol - "
+                                  "rhs3-2.novalocal - FAULTY;"}}
+        status = gcli.volumeGeoRepStatus("test-vol")
+        print(status)
+        self.assertEquals(status, expectedOut)
+
+    @mock.patch('glusternagios.utils.execCmd')
+    @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
+    def test_getVolumeGeoRepStatusMuliSlave(self, mock_glusterVolCmd,
+                                            mock_execCmd,):
+        mock_glusterVolCmd.return_value = ["gluster", "volume"]
+        mock_execCmd.return_value = (0,
+                                     self.__getGlusterGeoRepStatusResult2(),
+                                     None)
+        expectedOut = {'test-vol':
+                       {'status': gcli.GeoRepStatus.PARTIAL_FAULTY,
+                        'detail': "10.70.43.68::slave-vol - "
+                                  "rhs3-2.novalocal - FAULTY;"
+                                  "10.70.43.68::slave-vol2 - "
+                                  "rhs3.novalocal - NOT_STARTED;"
+                                  "10.70.43.68::slave-vol2 - "
+                                  "rhs3-2.novalocal - NOT_STARTED;"}}
+        status = gcli.volumeGeoRepStatus("test-vol")
+        print(status)
+        self.assertEquals(status, expectedOut)
+        mock_execCmd.return_value = (0,
+                                     self.__getGlusterGeoRepStatusResult3(),
+                                     None)
+        expectedOut = {'test-vol':
+                       {'status': gcli.GeoRepStatus.NOT_STARTED,
+                        'detail': "10.70.43.68::slave-vol - "
+                                  "rhs3-2.novalocal - NOT_STARTED;"}}
+        status = gcli.volumeGeoRepStatus("test-vol")
+        print(status)
+        self.assertEquals(status, expectedOut)
+
     def __getQuotaOut(self):
         return \
             ["                  Path                   Hard-limit Soft-limit"
@@ -1156,3 +1204,51 @@ class GlusterCliTests(TestCaseBase):
                 "/dir.7/file.2",
                 "/dir.10/file.2",
                 "/dir.7/file.4"]
+
+    def __getGlusterGeoRepStatusResult(self):
+        return ["MASTER NODE                MASTER VOL    MASTER BRICK    "
+                "SLAVE                     STATUS     CHECKPOINT STATUS    "
+                "CRAWL STATUS",
+                "--------------------------------------------------------"
+                "--------------------------------------------------------"
+                "----------------",
+                "rhs3.novalocal      rep           /bricks/b3      "
+                "10.70.43.68::slave-vol    faulty    "
+                "N/A                  N/A",
+                "rhs3-2.novalocal    rep           /bricks/b3      "
+                "10.70.43.68::slave-vol    faulty     "
+                "N/A                  N/A "]
+
+    def __getGlusterGeoRepStatusResult2(self):
+        return ["MASTER NODE                MASTER VOL    MASTER BRICK    "
+                "SLAVE                     STATUS     CHECKPOINT STATUS    "
+                "CRAWL STATUS",
+                "--------------------------------------------------------"
+                "--------------------------------------------------------"
+                "----------------",
+                "rhs3.novalocal      rep           /bricks/b3      "
+                "10.70.43.68::slave-vol    Passive    "
+                "N/A                  N/A",
+                "rhs3-2.novalocal    rep           /bricks/b3      "
+                "10.70.43.68::slave-vol    faulty     "
+                "N/A                  N/A ",
+                "rhs3.novalocal      rep           /bricks/b3      "
+                "10.70.43.68::slave-vol2    Not Started    "
+                "N/A                  N/A",
+                "rhs3-2.novalocal    rep           /bricks/b3      "
+                "10.70.43.68::slave-vol2    Not Started     "
+                "N/A                  N/A "]
+
+    def __getGlusterGeoRepStatusResult3(self):
+        return ["MASTER NODE                MASTER VOL    MASTER BRICK    "
+                "SLAVE                     STATUS     CHECKPOINT STATUS    "
+                "CRAWL STATUS",
+                "--------------------------------------------------------"
+                "--------------------------------------------------------"
+                "----------------",
+                "rhs3.novalocal      rep           /bricks/b3      "
+                "10.70.43.68::slave-vol    Passive    "
+                "N/A                  N/A",
+                "rhs3-2.novalocal    rep           /bricks/b3      "
+                "10.70.43.68::slave-vol    Not Started     "
+                "N/A                  N/A "]
