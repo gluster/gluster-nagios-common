@@ -25,8 +25,9 @@ import glusternagios
 
 
 class TestStorageUtils(TestCaseBase):
+    @mock.patch('glusternagios.storage._getLvsCmd')
     @mock.patch('glusternagios.storage.utils')
-    def testGetLvs(self, mock_utils):
+    def testGetLvs(self, mock_utils, mock_lvs_cmd):
         tmp_str = ["LVM2_LV_UUID=zjuuHG-HajL-PXxm-fjlL-5i00-EUnV-Wd2qL3^"
                    "LVM2_LV_NAME=lv_root^"
                    "LVM2_LV_PATH=/dev/vg_shubhnd/lv_root^"
@@ -90,6 +91,11 @@ class TestStorageUtils(TestCaseBase):
                    "LVM2_MODULES=^"
                    "LVM2_VG_NAME=vg_shubhnd"]
         mock_utils.execCmd.return_value = (0, tmp_str, "")
+        mock_lvs_cmd.return_value = ("/sbin/lvs" +
+                                     " --unquoted --noheading " +
+                                     "--nameprefixes --separator ^ " +
+                                     "--nosuffix --units m -o " +
+                                     "lv_all,vg_name").split()
         ret_val = glusternagios.storage.getLvs()
         value_to_verify = {'/dev/vg_shubhnd/lv_root':
                           {'LVM2_SYNC_PERCENT': '',
@@ -159,8 +165,9 @@ class TestStorageUtils(TestCaseBase):
                            'LVM2_SEG_COUNT': '1'}}
         self.assertEquals(ret_val, value_to_verify)
 
+    @mock.patch('glusternagios.storage._getVgsCmd')
     @mock.patch('glusternagios.storage.utils')
-    def testGetVgs(self, mock_utils):
+    def testGetVgs(self, mock_utils, mock_vgs_cmd):
         tmp_str = ["LVM2_VG_FMT=lvm2^"
                    "LVM2_VG_UUID=sTDsBh-DOc7-JR3y-RPHb-yz4R-aWP7-yZWQ0E^"
                    "LVM2_VG_NAME=vg_shubhnd^"
@@ -208,6 +215,11 @@ class TestStorageUtils(TestCaseBase):
                    "LVM2_VG_MDA_COPIES=unmanaged^"
                    "LVM2_LV_PATH=/dev/vg_shubhnd/lv_swap"]
         mock_utils.execCmd.return_value = (0, tmp_str, "")
+        mock_vgs_cmd.return_value = ("/sbin/vgs" +
+                                     " --unquoted --noheading " +
+                                     "--nameprefixes --separator ^ " +
+                                     "--nosuffix --units m -o " +
+                                     "vg_all,lv_path").split()
         ret_val = glusternagios.storage.getVgs()
         value_to_verify = {'vg_shubhnd':
                            {'LVM2_VG_EXTENT_SIZE': '4.00',
@@ -237,8 +249,9 @@ class TestStorageUtils(TestCaseBase):
                             'LVM2_VG_SIZE': '50696.00'}}
         self.assertEquals(ret_val, value_to_verify)
 
+    @mock.patch('glusternagios.storage._getPvsCmd')
     @mock.patch('glusternagios.storage.utils')
-    def testGetPvs(self, mock_utils):
+    def testGetPvs(self, mock_utils, mock_pvs_cmd):
         tmp_str = ["LVM2_PV_FMT=lvm2^"
                    "LVM2_PV_UUID=NF1uv0-eXJM-YJrn-Rc7b-Z2nw-E1Ly-3S24zn^"
                    "LVM2_DEV_SIZE=50699.00^"
@@ -257,6 +270,11 @@ class TestStorageUtils(TestCaseBase):
                    "LVM2_PV_MDA_USED_COUNT=1^"
                    "LVM2_VG_NAME=vg_shubhnd"]
         mock_utils.execCmd.return_value = (0, tmp_str, "")
+        mock_pvs_cmd.return_value = ("/sbin/pvs" +
+                                     " --unquoted --noheading " +
+                                     "--nameprefixes --separator ^ " +
+                                     "--nosuffix --units m -o " +
+                                     "pv_all,vg_name").split()
         ret_val = glusternagios.storage.getPvs()
         value_to_verify = {'/dev/vda2':
                            {'LVM2_PV_MDA_USED_COUNT': '1',
