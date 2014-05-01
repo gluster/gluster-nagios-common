@@ -31,6 +31,7 @@ vgsCmdPath = CommandPath("vgs",
                          )
 pvsCmdPath = CommandPath("pvs",
                          "/sbin/pvs")
+dfCmdPath = CommandPath("df", "/bin/df")
 
 
 # Class for exception definition
@@ -95,6 +96,18 @@ def _getLvDetailsCmd():
                                "--nameprefixes --separator ^ " +
                                "--nosuffix --units m -o " +
                                "vg_name,pv_name,lv_name").split()
+
+
+def _getdfDetailsCmd(brickName):
+    return [dfCmdPath.cmd] + (" -ah " + brickName).split()
+
+
+def getdf(brickName):
+    rc, out, err = utils.execCmd(_getdfDetailsCmd(brickName))
+    if rc:
+        raise ExecCmdFailedException(err=[str(err)])
+
+    return out
 
 
 # Gets the list of logical volumes
@@ -235,7 +248,9 @@ def _getBrickDeviceName(brickName):
 
 
 # Gets the list of disks participating in the given brick
-def getDisksForBrick(brickName, deviceName=None):
+def getDisksForBrick(deviceName=None, brickName=None):
+    if brickName is None and deviceName is None:
+        return ""
     # Get the brick device name
     if deviceName is None:
         deviceName = _getBrickDeviceName(brickName)
@@ -250,4 +265,21 @@ def getDisksForBrick(brickName, deviceName=None):
         if deviceName.endswith(tmp_str):
             return lv_dict[key]['LVM2_PV_NAME']
 
+    return ""
+
+
+#gets the brick's device name using df command
+def getBrickDeviceName(brickName):
+    brickName = brickName.rstrip()
+    if brickName is "":
+        return ""
+    dfOut = getdf(brickName)
+    #The output will be similar to
+    #['Filesystem      Size  Used Avail Use% Mounted on',
+    #  '/dev/vda1       485M   34M  426M   8% /boot']
+    #need to parse to get the device name
+    if len(dfOut) > 1:
+        dfOutList = dfOut[1].split()
+        if len(dfOutList) > 0:
+            return dfOutList[0]
     return ""
