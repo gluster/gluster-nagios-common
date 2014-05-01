@@ -26,6 +26,10 @@ BuildRequires:    pyflakes
 BuildRequires:    python-pep8
 BuildRequires:    python-nose
 BuildRequires:    python-devel
+BuildRequires:    python-cpopen
+BuildRequires:    python-ethtool
+BuildRequires:    python-mock
+BuildRequires:    python-pthreading
 Requires:         python-argparse
 Requires:         python-cpopen
 Requires:         python-pthreading
