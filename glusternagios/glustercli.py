@@ -413,8 +413,8 @@ def _parseVolumeInfo(tree):
             value['options'][o.find('name').text] = o.find('value').text
         for d in el.findall('bricks/brick'):
             brickDetail = {}
-            #this try block is to maintain backward compatibility
-            #it returns an empty list when gluster doesnot return uuid
+            # this try block is to maintain backward compatibility
+            # it returns an empty list when gluster doesnot return uuid
             try:
                 brickDetail['name'] = d.find('name').text
                 brickDetail['hostUuid'] = d.find('hostUuid').text
@@ -454,11 +454,11 @@ def volumeInfo(volumeName=None, remoteServer=None):
 
 def _parseVolumeQuotaStatus(out, isDisabled=False):
     status_detail = {'status': VolumeQuotaStatus.OK,
-              'soft_ex_dirs': [],
-              'hard_ex_dirs': []}
+                     'soft_ex_dirs': [],
+                     'hard_ex_dirs': []}
 
-    if isDisabled or out[0].startswith(
-        'quota: No quota') or out[0].find('not enabled') > -1:
+    if isDisabled or out[0].startswith('quota: No quota'
+                                       ) or out[0].find('not enabled') > -1:
         status_detail['status'] = VolumeQuotaStatus.DISABLED
         return status_detail
     for line in out[2:]:

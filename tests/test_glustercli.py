@@ -1074,8 +1074,8 @@ class GlusterCliTests(TestCaseBase):
                                         "volume demo-test-vol"], None
         status = gcli.volumeQuotaStatus("test-vol")
         exp_disabled_out = {'status': gcli.VolumeQuotaStatus.DISABLED,
-                   'hard_ex_dirs': [],
-                   'soft_ex_dirs': []}
+                            'hard_ex_dirs': [],
+                            'soft_ex_dirs': []}
         self.assertEquals(status, exp_disabled_out)
         mock_execCmd.return_value = 0, ["quota: No quota "
                                         "configured on "
