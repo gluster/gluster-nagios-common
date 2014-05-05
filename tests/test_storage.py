@@ -403,13 +403,12 @@ class TestStorageUtils(TestCaseBase):
                                             {'LVM2_LV_NAME': 'lv_swap',
                                              'LVM2_PV_NAME': '/dev/vda2',
                                              'LVM2_VG_NAME': 'vg_shubhnd'}}
-        disk = glusternagios.storage.getDisksForBrick("server-1:"
-                                                      "/tmp/vol1-a")
+        disk = glusternagios.storage.getDisksForBrick(
+            None, "server-1:/tmp/vol1-a")
         self.assertEquals(disk, "/dev/vda2")
         mock_get_brick_device_name.return_value = "/dev/mapper/" \
                                                   "vg_shubhnd-lv_root"
 
-        disk = glusternagios.storage.getDisksForBrick("server-1:/tmp/vol1-a",
-                                                      "/dev/mapper/"
-                                                      "vg_shubhnd-lv_root")
+        disk = glusternagios.storage.getDisksForBrick(
+            "/dev/mapper/vg_shubhnd-lv_root", "server-1:/tmp/vol1-a")
         self.assertEquals(disk, "/dev/vda2")
