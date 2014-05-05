@@ -85,7 +85,8 @@ class VolumeStatus:
 class VolumeQuotaStatus:
     DISABLED = 'DISABLED'
     OK = 'OK'
-    EXCEEDED = 'EXCEEDED'
+    SOFT_LIMIT_EXCEEDED = 'SOFT_LIMIT_EXCEEDED'
+    HARD_LIMIT_EXCEEDED = 'HARD_LIMIT_EXCEEDED'
 
 
 class VolumeSplitBrainStatus:
@@ -451,13 +452,29 @@ def volumeInfo(volumeName=None, remoteServer=None):
         raise GlusterCmdFailedException(err=[etree.tostring(xmltree)])
 
 
-def _parseVolumeQuotaStatus(out):
-    for line in out:
-        if line.startswith('quota: No quota') or line.find('not enabled') > -1:
-            return VolumeQuotaStatus.DISABLED
-        if line.find('Yes') > -1:
-            return VolumeQuotaStatus.EXCEEDED
-    return VolumeQuotaStatus.OK
+def _parseVolumeQuotaStatus(out, isDisabled=False):
+    status_detail = {'status': VolumeQuotaStatus.OK,
+              'soft_ex_dirs': [],
+              'hard_ex_dirs': []}
+
+    if isDisabled or out[0].startswith(
+        'quota: No quota') or out[0].find('not enabled') > -1:
+        status_detail['status'] = VolumeQuotaStatus.DISABLED
+        return status_detail
+    for line in out[2:]:
+        l = line.split()
+        if l[-1].find('Yes') > -1:
+            status_detail[
+                'status'] = VolumeQuotaStatus.HARD_LIMIT_EXCEEDED
+            status_detail['hard_ex_dirs'].append(l[0])
+            continue
+        elif l[-2].find('Yes') > -1:
+            if status_detail['status'
+                             ] != VolumeQuotaStatus.HARD_LIMIT_EXCEEDED:
+                status_detail['status'] = VolumeQuotaStatus.SOFT_LIMIT_EXCEEDED
+            status_detail['soft_ex_dirs'].append(l[0])
+
+    return status_detail
 
 
 def _parseVolumeSelfHealSplitBrainInfo(out):
@@ -567,7 +584,11 @@ def volumeHealSplitBrainStatus(volumeName, remoteServer=None):
 def volumeQuotaStatus(volumeName, remoteServer=None):
     """
     Returns:
-        STATUS
+
+        {status: OK|SOFT_LIMIT_EXCEEDED|HARD_LIMIT_EXCEEDED|DISABLED,
+         soft_ex_dirs: ["dir1","dir2".....],
+         hard_ex_dirs: ["dir1","dir2".....]}
+
     """
     command = _getGlusterVolCmd() + ["quota", volumeName, "list"]
     if remoteServer:
@@ -575,10 +596,10 @@ def volumeQuotaStatus(volumeName, remoteServer=None):
 
     rc, out, err = _execGluster(command)
     if rc == 0:
-        return _parseVolumeQuotaStatus(out)
+        return _parseVolumeQuotaStatus(out, isDisabled=False)
     else:
         if len(err) > 0 and err[0].find("Quota is disabled") > -1:
-            return VolumeQuotaStatus.DISABLED
+            return _parseVolumeQuotaStatus(out, isDisabled=True)
     raise GlusterCmdFailedException(rc, err)
 
 

@@ -1073,15 +1073,23 @@ class GlusterCliTests(TestCaseBase):
                                         "Quota is not enabled on "
                                         "volume demo-test-vol"], None
         status = gcli.volumeQuotaStatus("test-vol")
-        self.assertEquals(status, gcli.VolumeQuotaStatus.DISABLED)
+        exp_disabled_out = {'status': gcli.VolumeQuotaStatus.DISABLED,
+                   'hard_ex_dirs': [],
+                   'soft_ex_dirs': []}
+        self.assertEquals(status, exp_disabled_out)
         mock_execCmd.return_value = 0, ["quota: No quota "
                                         "configured on "
                                         "volume demo-test-vol"], None
         status = gcli.volumeQuotaStatus("test-vol")
-        self.assertEquals(status, gcli.VolumeQuotaStatus.DISABLED)
+        self.assertEquals(status, exp_disabled_out)
         mock_execCmd.return_value = 0, self.__getQuotaOut(), None
         status = gcli.volumeQuotaStatus("test-vol")
-        self.assertEquals(status, gcli.VolumeQuotaStatus.EXCEEDED)
+        exp_disabled_out = \
+            {'status': gcli.VolumeQuotaStatus.HARD_LIMIT_EXCEEDED,
+             'hard_ex_dirs': ['/test/rewe'],
+             'soft_ex_dirs': ['/test']}
+
+        self.assertEquals(status, exp_disabled_out)
 
     @mock.patch('glusternagios.utils.execCmd')
     @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
@@ -1180,7 +1188,7 @@ class GlusterCliTests(TestCaseBase):
              "-------------------------------------------------------------"
              "--------------------------------------------------------------",
              "/test                                    200.0KB       80%    "
-             " 200.0KB  0Bytes             No                   No",
+             " 200.0KB  0Bytes             Yes                   No",
              "/test/rewe                               200.0KB       80%     "
              "200.0KB  0Bytes             Yes                  Yes"]
 
