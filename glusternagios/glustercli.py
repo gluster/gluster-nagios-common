@@ -626,6 +626,10 @@ def peerStatus():
     """
     Returns:
         [{'hostname': HOSTNAME, 'uuid': UUID, 'status': STATE}, ...]
+
+    Note: Current host will be the first entry in the list with name as
+    'localhost' and status as CONNECTED
+
     """
     command = _getGlusterPeerCmd() + ["status"]
     try:
@@ -633,8 +637,7 @@ def peerStatus():
     except GlusterCmdFailedException as e:
         raise GlusterCmdFailedException(rc=e.rc, err=e.err)
     try:
-        return _parsePeerStatus(xmltree,
-                                _getLocalIpAddress() or _getGlusterHostName(),
-                                hostUUIDGet(), HostStatus.CONNECTED)
+        return _parsePeerStatus(xmltree, "localhost", hostUUIDGet(),
+                                HostStatus.CONNECTED)
     except _etreeExceptions:
         raise GlusterCmdFailedException(err=[etree.tostring(xmltree)])
