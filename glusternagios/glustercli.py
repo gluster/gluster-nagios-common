@@ -100,6 +100,7 @@ class GeoRepStatus:
     NOT_STARTED = "NOT_STARTED"
     FAULTY = "FAULTY"
     PARTIAL_FAULTY = "PARTIAL_FAULTY"
+    STOPPED = "STOPPED"
 
 
 class TransportType:
@@ -494,44 +495,70 @@ def _parseVolumeSelfHealSplitBrainInfo(out):
 
 
 def _parseVolumeGeoRepStatus(volumeName, out):
-    detail = ""
-    status = GeoRepStatus.OK
     # https://bugzilla.redhat.com/show_bug.cgi?id=1090910 - opened for xml
     # output. For now parsing below string output format
     # MASTER NODE                MASTER VOL    MASTER BRICK
     # SLAVE                     STATUS     CHECKPOINT STATUS  CRAWL STATUS
     slaves = {}
-    all_status = ['ACTIVE', 'PASSIVE', 'FAULTY', 'NOT STARTED', 'INITIALISING']
-    for line in out:
-        if any(gstatus in line.upper() for gstatus in all_status):
-            nodeline = line.split()
-            slave = nodeline[3]
-            if slaves.get(slave) is None:
-                slaves[slave] = {'nodecount': 0,
-                                 'faultcount': 0,
-                                 'notstarted': 0}
-            slaves[slave]['nodecount'] += 1
-            if GeoRepStatus.FAULTY in line.upper() \
-               or "NOT STARTED" in line.upper():
-                node = nodeline[0]
-                if GeoRepStatus.FAULTY == nodeline[4].upper():
-                    slaves[slave]['faultcount'] += 1
-                    tempstatus = GeoRepStatus.FAULTY
-                else:
-                    slaves[slave]['notstarted'] += 1
-                    tempstatus = GeoRepStatus.NOT_STARTED
-                detail += ("%s - %s - %s;" % (slave,
-                                              node,
-                                              tempstatus))
+    other_status = ['ACTIVE', 'INITIALIZING...']
+    for line in out[3:]:
+        tempstatus = None
+        nodeline = line.split()
+        node = nodeline[0]
+        brick = nodeline[2]
+        slave = nodeline[3]
+        if slaves.get(slave) is None:
+            slaves[slave] = {'nodecount': 0,
+                             'faulty': 0,
+                             'notstarted': 0,
+                             'stopped': 0,
+                             'passive': 0,
+                             'detail': '',
+                             'status': GeoRepStatus.OK
+                             }
+        slaves[slave]['nodecount'] += 1
+        if GeoRepStatus.FAULTY in line.upper():
+            slaves[slave]['faulty'] += 1
+            tempstatus = GeoRepStatus.FAULTY
+        elif "NOT STARTED" in line.upper():
+            slaves[slave]['notstarted'] += 1
+            tempstatus = GeoRepStatus.NOT_STARTED
+        elif "PASSIVE" in line.upper():
+            slaves[slave]['passive'] += 1
+            tempstatus = "PASSIVE"
+        elif GeoRepStatus.STOPPED in line.upper():
+            slaves[slave]['stopped'] += 1
+            tempstatus = GeoRepStatus.STOPPED
+        elif not any(gstatus in line.upper() for gstatus in other_status):
+            tempstatus = nodeline[4]
+
+        if tempstatus:
+            slaves[slave]['detail'] += ("%s:%s - %s;" % (node,
+                                                         brick,
+                                                         tempstatus))
+    volumes = volumeInfo(volumeName)
+    replicaCount = volumes[volumeName]["brickCount"]
+    if "REPLICATE" in volumes[volumeName]["volumeType"]:
+        replicaCount = volumes[volumeName]["replicaCount"]
+
     for slave, count_dict in slaves.iteritems():
-        if count_dict['nodecount'] == count_dict['faultcount']:
-            status = GeoRepStatus.FAULTY
-            break
-        elif count_dict['faultcount'] > 0:
-            status = GeoRepStatus.PARTIAL_FAULTY
-        elif count_dict['notstarted'] > 0 and status == GeoRepStatus.OK:
-            status = GeoRepStatus.NOT_STARTED
-    return {volumeName: {'status': status, 'detail': detail}}
+        if count_dict['faulty'] > 0:
+            # georep cli status does not give the node name in the same way as
+            # gluster volume info - there's no way to compare and get the
+            # subvolume. So if fault+passive > than num of primary bricks,
+            # moving to faulty
+            if (count_dict['faulty'] + count_dict['passive']
+                    > count_dict['nodecount']/replicaCount):
+                slaves[slave]['status'] = GeoRepStatus.FAULTY
+            else:
+                slaves[slave]['status'] = GeoRepStatus.PARTIAL_FAULTY
+        elif (count_dict['notstarted'] > 0 and
+              slaves[slave]['status'] == GeoRepStatus.OK):
+            slaves[slave]['status'] = GeoRepStatus.NOT_STARTED
+        elif (count_dict['stopped'] > 0 and
+              slaves[slave]['status'] == GeoRepStatus.OK):
+            slaves[slave]['status'] = GeoRepStatus.STOPPED
+    return {volumeName: {'slaves': slaves}}
 
 
 def volumeGeoRepStatus(volumeName, remoteServer=None):
@@ -539,8 +566,15 @@ def volumeGeoRepStatus(volumeName, remoteServer=None):
     Arguments:
        * VolumeName
     Returns:
-        {VOLUMENAME: {'status': GEOREPSTATUS,
-                      'detail': detailed message}}
+        {VOLUMENAME: {'slaves': [{SLAVENAME:{
+                                   'nodecount': COUNT,
+                                   'faulty': COUNT,
+                                   'notstarted': 0,
+                                   'stopped': 0,
+                                   'passive':0,
+                                   'detail': detailed message,
+                                   'status': GEOREPSTATUS}}
+                                ]}
     """
     command = _getGlusterVolCmd() + ["geo-replication", volumeName, "status"]
     if remoteServer:
