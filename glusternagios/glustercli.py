@@ -548,7 +548,7 @@ def _parseVolumeGeoRepStatus(volumeName, out):
             # subvolume. So if fault+passive > than num of primary bricks,
             # moving to faulty
             if (count_dict['faulty'] + count_dict['passive']
-                    > count_dict['nodecount']/replicaCount):
+                    >= count_dict['nodecount']/replicaCount):
                 slaves[slave]['status'] = GeoRepStatus.FAULTY
             else:
                 slaves[slave]['status'] = GeoRepStatus.PARTIAL_FAULTY
@@ -569,9 +569,9 @@ def volumeGeoRepStatus(volumeName, remoteServer=None):
         {VOLUMENAME: {'slaves': [{SLAVENAME:{
                                    'nodecount': COUNT,
                                    'faulty': COUNT,
-                                   'notstarted': 0,
-                                   'stopped': 0,
-                                   'passive':0,
+                                   'notstarted': COUNT,
+                                   'stopped': COUNT,
+                                   'passive':COUNT,
                                    'detail': detailed message,
                                    'status': GEOREPSTATUS}}
                                 ]}
