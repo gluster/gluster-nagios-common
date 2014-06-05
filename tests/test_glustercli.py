@@ -1151,7 +1151,7 @@ class GlusterCliTests(TestCaseBase):
                                          }
                                         }
         expectedOut = {'test-vol':
-                       {'slaves': {'10.70.43.68::slave-vol':
+                       {'slaves': {'slave-vol':
                                    {'faulty': 2,
                                     'nodecount': 2,
                                     'notstarted': 0,
@@ -1161,7 +1161,8 @@ class GlusterCliTests(TestCaseBase):
                                               '/bricks/b3 - FAULTY;'
                                               'rhs3-2.novalocal:'
                                               '/bricks/b3 - FAULTY;',
-                                    'status': gcli.GeoRepStatus.FAULTY}
+                                    'status': gcli.GeoRepStatus.FAULTY,
+                                    'name': '10.70.43.68::slave-vol'}
                                    }}}
         status = gcli.volumeGeoRepStatus("test-vol")
         print(status)
@@ -1186,7 +1187,7 @@ class GlusterCliTests(TestCaseBase):
                                         }
         expectedOut = {'test-vol':
                        {'slaves':
-                        {'10.70.43.68::slave-vol':
+                        {'slave-vol':
                          {'faulty': 1,
                           'nodecount': 2,
                           'notstarted': 0,
@@ -1196,8 +1197,9 @@ class GlusterCliTests(TestCaseBase):
                                     '- PASSIVE;'
                                     'rhs3-2.novalocal:/bricks/b3 '
                                     '- FAULTY;',
-                          'status': gcli.GeoRepStatus.FAULTY},
-                         '10.70.43.68::slave-vol2':
+                          'status': gcli.GeoRepStatus.FAULTY,
+                          'name': '10.70.43.68::slave-vol'},
+                         'slave-vol2':
                          {'faulty': 0,
                           'nodecount': 2,
                           'notstarted': 2,
@@ -1207,7 +1209,8 @@ class GlusterCliTests(TestCaseBase):
                                     '- NOT_STARTED;'
                                     'rhs3-2.novalocal:/bricks/b3 '
                                     '- NOT_STARTED;',
-                          'status': gcli.GeoRepStatus.NOT_STARTED}
+                          'status': gcli.GeoRepStatus.NOT_STARTED,
+                          'name': '10.70.43.68::slave-vol2'}
                          }}}
         status = gcli.volumeGeoRepStatus("test-vol")
         print(status)
@@ -1217,7 +1220,7 @@ class GlusterCliTests(TestCaseBase):
                                      None)
         expectedOut = {'test-vol':
                        {'slaves':
-                        {'10.70.43.68::slave-vol':
+                        {'slave-vol':
                          {'faulty': 0,
                           'nodecount': 2,
                           'notstarted': 1,
@@ -1228,7 +1231,8 @@ class GlusterCliTests(TestCaseBase):
                                     'rhs3-2.novalocal:'
                                     '/bricks/b3 '
                                     '- NOT_STARTED;',
-                          'status': gcli.GeoRepStatus.NOT_STARTED
+                          'status': gcli.GeoRepStatus.NOT_STARTED,
+                          'name': '10.70.43.68::slave-vol'
                           }}}}
         status = gcli.volumeGeoRepStatus("test-vol")
         print(status)
@@ -1293,13 +1297,13 @@ class GlusterCliTests(TestCaseBase):
                 "10.70.43.68::slave-vol    Passive    "
                 "N/A                  N/A",
                 "rhs3-2.novalocal    rep           /bricks/b3      "
-                "10.70.43.68::slave-vol    faulty     "
+                "10.70.43.69::slave-vol    faulty     "
                 "N/A                  N/A ",
                 "rhs3.novalocal      rep           /bricks/b3      "
                 "10.70.43.68::slave-vol2    Not Started    "
                 "N/A                  N/A",
                 "rhs3-2.novalocal    rep           /bricks/b3      "
-                "10.70.43.68::slave-vol2    Not Started     "
+                "10.70.43.69::slave-vol2    Not Started     "
                 "N/A                  N/A "]
 
     def __getGlusterGeoRepStatusResult3(self):

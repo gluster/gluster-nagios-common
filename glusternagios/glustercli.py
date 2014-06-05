@@ -506,7 +506,7 @@ def _parseVolumeGeoRepStatus(volumeName, out):
         nodeline = line.split()
         node = nodeline[0]
         brick = nodeline[2]
-        slave = nodeline[3]
+        slave = nodeline[3][nodeline[3].find('::') + 2:]
         if slaves.get(slave) is None:
             slaves[slave] = {'nodecount': 0,
                              'faulty': 0,
@@ -514,7 +514,8 @@ def _parseVolumeGeoRepStatus(volumeName, out):
                              'stopped': 0,
                              'passive': 0,
                              'detail': '',
-                             'status': GeoRepStatus.OK
+                             'status': GeoRepStatus.OK,
+                             'name': nodeline[3]
                              }
         slaves[slave]['nodecount'] += 1
         if GeoRepStatus.FAULTY in line.upper():
@@ -537,11 +538,17 @@ def _parseVolumeGeoRepStatus(volumeName, out):
                                                          brick,
                                                          tempstatus))
     volumes = volumeInfo(volumeName)
-    replicaCount = volumes[volumeName]["brickCount"]
+    brickCount = volumes[volumeName]["brickCount"]
     if "REPLICATE" in volumes[volumeName]["volumeType"]:
         replicaCount = volumes[volumeName]["replicaCount"]
+    else:
+        replicaCount = brickCount
 
     for slave, count_dict in slaves.iteritems():
+        if count_dict['nodecount'] > brickCount:
+            # There are multiple slave volumes with same name, the output
+            # may be wrong
+            slaves[slave]['detail'] += "NOTE:Multiple slave session aggregated"
         if count_dict['faulty'] > 0:
             # georep cli status does not give the node name in the same way as
             # gluster volume info - there's no way to compare and get the
@@ -573,7 +580,8 @@ def volumeGeoRepStatus(volumeName, remoteServer=None):
                                    'stopped': COUNT,
                                    'passive':COUNT,
                                    'detail': detailed message,
-                                   'status': GEOREPSTATUS}}
+                                   'status': GEOREPSTATUS,
+                                   'name': SLAVESESSIONNAME}}
                                 ]}
     """
     command = _getGlusterVolCmd() + ["geo-replication", volumeName, "status"]
