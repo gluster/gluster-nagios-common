@@ -538,9 +538,9 @@ def _parseVolumeGeoRepStatus(volumeName, out):
                                                          brick,
                                                          tempstatus))
     volumes = volumeInfo(volumeName)
-    brickCount = volumes[volumeName]["brickCount"]
+    brickCount = int(volumes[volumeName]["brickCount"])
     if "REPLICATE" in volumes[volumeName]["volumeType"]:
-        replicaCount = volumes[volumeName]["replicaCount"]
+        replicaCount = int(volumes[volumeName]["replicaCount"])
     else:
         replicaCount = brickCount
 
