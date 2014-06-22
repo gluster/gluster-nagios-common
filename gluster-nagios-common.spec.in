@@ -21,6 +21,8 @@ Group:            Applications/System
 URL:              http://www.redhat.com
 Vendor:           Red Hat, Inc.
 Source0:          %{name}-%{version}.tar.gz
+
+BuildArch:        noarch
 BuildRoot:        %{_tmppath}/%{name}-%{version}-root
 BuildRequires:    pyflakes
 BuildRequires:    python-pep8
