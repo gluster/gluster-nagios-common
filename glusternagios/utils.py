@@ -18,7 +18,7 @@
 # Refer to the README and COPYING files for full details of the license
 #
 
-## most of the code is copied from vdsm project
+# most of the code is copied from vdsm project
 
 import logging
 import subprocess

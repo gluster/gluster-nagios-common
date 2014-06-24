@@ -268,16 +268,16 @@ def getDisksForBrick(deviceName=None, brickName=None):
     return ""
 
 
-#gets the brick's device name using df command
+# gets the brick's device name using df command
 def getBrickDeviceName(brickName):
     brickName = brickName.rstrip()
     if brickName is "":
         return ""
     dfOut = getdf(brickName)
-    #The output will be similar to
-    #['Filesystem      Size  Used Avail Use% Mounted on',
+    # The output will be similar to
+    # ['Filesystem      Size  Used Avail Use% Mounted on',
     #  '/dev/vda1       485M   34M  426M   8% /boot']
-    #need to parse to get the device name
+    # need to parse to get the device name
     if len(dfOut) > 1:
         dfOutList = dfOut[1].split()
         if len(dfOutList) > 0:
