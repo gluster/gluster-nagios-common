@@ -557,7 +557,7 @@ def _parseVolumeGeoRepStatus(volumeName, out):
     if "REPLICATE" in volumes[volumeName]["volumeType"]:
         replicaCount = int(volumes[volumeName]["replicaCount"])
     else:
-        replicaCount = brickCount
+        replicaCount = 1
 
     for slave, count_dict in slaves.iteritems():
         if count_dict['nodecount'] > brickCount:
@@ -565,15 +565,18 @@ def _parseVolumeGeoRepStatus(volumeName, out):
             # may be wrong
             slaves[slave]['detail'] += "NOTE:Multiple slave session aggregated"
         if count_dict['faulty'] > 0:
+            if replicaCount > 1:
             # georep cli status does not give the node name in the same way as
             # gluster volume info - there's no way to compare and get the
             # subvolume. So if fault+passive > than num of primary bricks,
             # moving to faulty
-            if (count_dict['faulty'] + count_dict['passive']
-                    >= count_dict['nodecount']/replicaCount):
-                slaves[slave]['status'] = GeoRepStatus.FAULTY
+                if (count_dict['faulty'] + count_dict['passive']
+                        > count_dict['nodecount']/replicaCount):
+                    slaves[slave]['status'] = GeoRepStatus.FAULTY
+                else:
+                    slaves[slave]['status'] = GeoRepStatus.PARTIAL_FAULTY
             else:
-                slaves[slave]['status'] = GeoRepStatus.PARTIAL_FAULTY
+                slaves[slave]['status'] = GeoRepStatus.FAULTY
         elif (count_dict['notstarted'] > 0 and
               slaves[slave]['status'] == GeoRepStatus.OK):
             slaves[slave]['status'] = GeoRepStatus.NOT_STARTED
