@@ -1097,7 +1097,7 @@ class GlusterCliTests(TestCaseBase):
                                                  mock_glusterVolCmd,
                                                  mock_execCmd,):
         mock_glusterVolCmd.return_value = ["gluster", "volume"]
-        mock_execCmd.return_value = -1, None, "err"
+        mock_execCmd.return_value = -1, None, ["err"]
         try:
             gcli.volumeQuotaStatus("test-vol")
             assert False

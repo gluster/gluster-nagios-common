@@ -26,6 +26,7 @@ from hostname import getHostNameFqdn, HostNameException
 
 glusterCmdPath = CommandPath("gluster",
                              "/usr/sbin/gluster")
+_TRANS_IN_PROGRESS = "another transaction is in progress"
 
 
 # Class for exception definition
@@ -51,6 +52,10 @@ class GlusterCmdFailedException(Exception):
         if self.rc:
             s += '\nreturn code: %s' % self.rc
         return s
+
+
+class GlusterLockedException(GlusterCmdFailedException):
+    pass
 
 
 if hasattr(etree, 'ParseError'):
@@ -148,14 +153,27 @@ def _getLocalIpAddress():
 
 
 def _execGluster(cmd):
-    return utils.execCmd(cmd)
+    rc, out, err = utils.execCmd(cmd)
+    if rc != 0:
+        if ((err is not None and
+             any(_TRANS_IN_PROGRESS in e.lower() for e in err)) or
+            (out is not None and
+             any("connection failed" in o.lower() for o in out))):
+            raise GlusterLockedException(rc, out, err)
+    return rc, out, err
 
 
 def _execGlusterXml(cmd):
     cmd.append('--xml')
     rc, out, err = utils.execCmd(cmd)
     if rc != 0:
-        raise GlusterCmdFailedException(rc, out, err)
+        if ((err is not None and
+             any(_TRANS_IN_PROGRESS in e.lower() for e in err)) or
+            (out is not None and
+             any("connection failed" in o.lower() for o in out))):
+            raise GlusterLockedException(rc, out, err)
+        else:
+            raise GlusterCmdFailedException(rc, out, err)
     try:
         tree = etree.fromstring('\n'.join(out))
         rv = int(tree.find('opRet').text)
@@ -174,6 +192,7 @@ def _execGlusterXml(cmd):
 def hostUUIDGet():
     command = _getGlusterSystemCmd() + ["uuid", "get"]
     rc, out, err = _execGluster(command)
+
     if rc == 0:
         for line in out:
             if line.startswith('UUID: '):
@@ -355,10 +374,8 @@ def volumeStatus(volumeName, brick=None, option=None):
         command.append(brick)
     if option:
         command.append(option)
-    try:
-        xmltree = _execGlusterXml(command)
-    except GlusterCmdFailedException as e:
-        raise GlusterCmdFailedException(rc=e.rc, err=e.err)
+    xmltree = _execGlusterXml(command)
+
     try:
         if option == 'detail':
             return _parseVolumeStatusDetail(xmltree)
@@ -443,10 +460,8 @@ def volumeInfo(volumeName=None, remoteServer=None):
         command += ['--remote-host=%s' % remoteServer]
     if volumeName:
         command.append(volumeName)
-    try:
-        xmltree = _execGlusterXml(command)
-    except GlusterCmdFailedException as e:
-        raise GlusterCmdFailedException(rc=e.rc, err=e.err)
+    xmltree = _execGlusterXml(command)
+
     try:
         return _parseVolumeInfo(xmltree)
     except _etreeExceptions:
@@ -592,7 +607,7 @@ def volumeGeoRepStatus(volumeName, remoteServer=None):
 
     if rc == 0:
         return _parseVolumeGeoRepStatus(volumeName, out)
-    raise GlusterCmdFailedException(rc=rc, err=err)
+    raise GlusterCmdFailedException(rc=rc, out=out, err=err)
 
 
 def volumeHealSplitBrainStatus(volumeName, remoteServer=None):
@@ -620,7 +635,7 @@ def volumeHealSplitBrainStatus(volumeName, remoteServer=None):
             value['unsyncedentries'] = 0
             volume[volumeName] = value
             return volume
-    raise GlusterCmdFailedException(rc=rc, err=err)
+    raise GlusterCmdFailedException(rc=rc, out=out, err=err)
 
 
 def volumeQuotaStatus(volumeName, remoteServer=None):
@@ -637,12 +652,13 @@ def volumeQuotaStatus(volumeName, remoteServer=None):
         command += ['--remote-host=%s' % remoteServer]
 
     rc, out, err = _execGluster(command)
+
     if rc == 0:
         return _parseVolumeQuotaStatus(out, isDisabled=False)
     else:
         if len(err) > 0 and err[0].find("Quota is disabled") > -1:
             return _parseVolumeQuotaStatus(out, isDisabled=True)
-    raise GlusterCmdFailedException(rc, err)
+    raise GlusterCmdFailedException(rc=rc, out=out, err=err)
 
 
 def _parsePeerStatus(tree, gHostName, gUuid, gStatus):
@@ -674,10 +690,8 @@ def peerStatus():
 
     """
     command = _getGlusterPeerCmd() + ["status"]
-    try:
-        xmltree = _execGlusterXml(command)
-    except GlusterCmdFailedException as e:
-        raise GlusterCmdFailedException(rc=e.rc, err=e.err)
+    xmltree = _execGlusterXml(command)
+
     try:
         return _parsePeerStatus(xmltree, "localhost", hostUUIDGet(),
                                 HostStatus.CONNECTED)
