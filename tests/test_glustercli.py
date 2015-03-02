@@ -1255,10 +1255,10 @@ class GlusterCliTests(TestCaseBase):
                 "",
                 "Brick node2:/bricks/b3",
                 "Status: Brick is Not connected",
-                "Number of entries: 0"
+                "Number of entries in split-brain: 0"
                 "",
                 "Brick node1:/bricks/b3",
-                "Number of entries: 10",
+                "Number of entries in split-brain: 10",
                 "/dir.7/file.5",
                 "/dir.8/file.3",
                 "/dir.9/file.5",

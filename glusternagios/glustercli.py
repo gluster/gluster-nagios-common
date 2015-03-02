@@ -493,11 +493,11 @@ def _parseVolumeQuotaStatus(out, isDisabled=False):
     return status_detail
 
 
-def _parseVolumeSelfHealSplitBrainInfo(out):
+def _parseVolumeSelfHealInfo(out):
     value = {}
     splitbrainentries = 0
     for line in out:
-        if line.startswith('Number of entries:'):
+        if line.startswith('Number of entries'):
             entries = int(line.split(':')[1])
             if entries > 0:
                 splitbrainentries += entries
@@ -613,7 +613,7 @@ def volumeGeoRepStatus(volumeName, remoteServer=None):
     raise GlusterCmdFailedException(rc=rc, out=out, err=err)
 
 
-def volumeHealSplitBrainStatus(volumeName, remoteServer=None):
+def volumeHealStatus(volumeName, remoteServer=None):
     """
     Arguments:
        * VolumeName
@@ -622,6 +622,29 @@ def volumeHealSplitBrainStatus(volumeName, remoteServer=None):
                       'unsyncedentries': ENTRYCOUNT}}
     """
     command = _getGlusterVolCmd() + ["heal", volumeName, "info"]
+    return _volumeHealCommandOutput(volumeName, command, remoteServer)
+
+
+def volumeHealSplitBrainStatus(volumeName, remoteServer=None):
+    """
+    Arguments:
+       * VolumeName
+    Returns:
+        {VOLUMENAME: {'status': SELFHEALSTATUS,
+                      'unsyncedentries': ENTRYCOUNT}}
+    """
+    command = _getGlusterVolCmd() + ["heal", volumeName, "info", "split-brain"]
+    return _volumeHealCommandOutput(volumeName, command, remoteServer)
+
+
+def _volumeHealCommandOutput(volumeName, command, remoteServer=None):
+    """
+    Arguments:
+       * VolumeName
+    Returns:
+        {VOLUMENAME: {'status': SELFHEALSTATUS,
+                      'unsyncedentries': ENTRYCOUNT}}
+    """
     if remoteServer:
         command += ['--remote-host=%s' % remoteServer]
 
@@ -629,7 +652,7 @@ def volumeHealSplitBrainStatus(volumeName, remoteServer=None):
     volume = {}
     value = {}
     if rc == 0:
-        value = _parseVolumeSelfHealSplitBrainInfo(out)
+        value = _parseVolumeSelfHealInfo(out)
         volume[volumeName] = value
         return volume
     else:
