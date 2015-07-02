@@ -56,6 +56,8 @@ class GlusterCliTests(TestCaseBase):
         <distCount>2</distCount>
         <stripeCount>1</stripeCount>
         <replicaCount>2</replicaCount>
+        <disperseCount>5</disperseCount>
+        <redundancyCount>1</redundancyCount>
         <type>2</type>
         <typeStr>Replicate</typeStr>
         <transport>0</transport>
@@ -84,6 +86,8 @@ class GlusterCliTests(TestCaseBase):
         <distCount>1</distCount>
         <stripeCount>1</stripeCount>
         <replicaCount>1</replicaCount>
+        <disperseCount>5</disperseCount>
+        <redundancyCount>1</redundancyCount>
         <type>0</type>
         <typeStr>Distribute</typeStr>
         <transport>1</transport>
@@ -116,6 +120,8 @@ class GlusterCliTests(TestCaseBase):
                        'options': {'auth.allow': '*'},
                        'replicaCount': '2',
                        'stripeCount': '1',
+                       'disperseCount': '5',
+                       'redundancyCount': '1',
                        'transportType': [gcli.TransportType.TCP],
                        'uuid': 'b3114c71-741b-4c6f-a39e-80384c4ea3cf',
                        'volumeName': 'music',
@@ -131,6 +137,8 @@ class GlusterCliTests(TestCaseBase):
                        'options': {},
                        'replicaCount': '1',
                        'stripeCount': '1',
+                       'disperseCount': '5',
+                       'redundancyCount': '1',
                        'transportType': [gcli.TransportType.RDMA],
                        'uuid': 'b444ed94-f346-4cda-bd55-0282f21d22db',
                        'volumeName': 'test1',

@@ -398,7 +398,9 @@ def _parseVolumeInfo(tree):
                       'uuid': UUID,
                       'volumeName': NAME,
                       'volumeStatus': STATUS,
-                      'volumeType': TYPE}, ...}
+                      'volumeType': TYPE,
+                      'disperseCount': DISPERSE_COUNT,
+                      'redundancyCount': REDUNDANCY_COUNT}, ...}
     """
     volumes = {}
     for el in tree.findall('volInfo/volumes/volume'):
@@ -415,6 +417,8 @@ def _parseVolumeInfo(tree):
         value['distCount'] = el.find('distCount').text
         value['stripeCount'] = el.find('stripeCount').text
         value['replicaCount'] = el.find('replicaCount').text
+        value['disperseCount'] = el.find('disperseCount').text
+        value['redundancyCount'] = el.find('redundancyCount').text
         transportType = el.find('transport').text
         if transportType == '0':
             value['transportType'] = [TransportType.TCP]
@@ -453,7 +457,9 @@ def volumeInfo(volumeName=None, remoteServer=None):
                       'uuid': UUID,
                       'volumeName': NAME,
                       'volumeStatus': STATUS,
-                      'volumeType': TYPE}, ...}
+                      'volumeType': TYPE,
+                      'disperseCount': DISPERSE_COUNT,
+                      'redundancyCount': REDUNDANCY_COUNT}, ...}
     """
     command = _getGlusterVolCmd() + ["info"]
     if remoteServer:
