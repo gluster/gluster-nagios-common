@@ -515,80 +515,75 @@ def _parseVolumeSelfHealInfo(out):
     return value
 
 
-def _parseVolumeGeoRepStatus(volumeName, out):
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1090910 - opened for xml
-    # output. For now parsing below string output format
-    # MASTER NODE                MASTER VOL    MASTER BRICK
-    # SLAVE                     STATUS     CHECKPOINT STATUS  CRAWL STATUS
+def _parseVolumeGeoRepStatus(volumeName, tree):
     slaves = {}
-    other_status = ['ACTIVE', 'INITIALIZING...']
-    for line in out[3:]:
-        tempstatus = None
-        nodeline = line.split()
-        node = nodeline[0]
-        brick = nodeline[2]
-        slave = nodeline[3][nodeline[3].find('::') + 2:]
-        if slaves.get(slave) is None:
-            slaves[slave] = {'nodecount': 0,
-                             'faulty': 0,
-                             'notstarted': 0,
-                             'stopped': 0,
-                             'passive': 0,
-                             'detail': '',
-                             'status': GeoRepStatus.OK,
-                             'name': nodeline[3]
-                             }
-        slaves[slave]['nodecount'] += 1
-        if GeoRepStatus.FAULTY in line.upper():
-            slaves[slave]['faulty'] += 1
-            tempstatus = GeoRepStatus.FAULTY
-        elif "NOT STARTED" in line.upper():
-            slaves[slave]['notstarted'] += 1
-            tempstatus = GeoRepStatus.NOT_STARTED
-        elif "PASSIVE" in line.upper():
-            slaves[slave]['passive'] += 1
-            tempstatus = "PASSIVE"
-        elif GeoRepStatus.STOPPED in line.upper():
-            slaves[slave]['stopped'] += 1
-            tempstatus = GeoRepStatus.STOPPED
-        elif not any(gstatus in line.upper() for gstatus in other_status):
-            tempstatus = nodeline[4]
-
-        if tempstatus:
-            slaves[slave]['detail'] += ("%s:%s - %s;" % (node,
-                                                         brick,
-                                                         tempstatus))
     volumes = volumeInfo(volumeName)
-    brickCount = int(volumes[volumeName]["brickCount"])
     if "REPLICATE" in volumes[volumeName]["volumeType"]:
         replicaCount = int(volumes[volumeName]["replicaCount"])
     else:
         replicaCount = 1
-
-    for slave, count_dict in slaves.iteritems():
-        if count_dict['nodecount'] > brickCount:
-            # There are multiple slave volumes with same name, the output
-            # may be wrong
-            slaves[slave]['detail'] += "NOTE:Multiple slave session aggregated"
-        if count_dict['faulty'] > 0:
+    other_status = ['ACTIVE', 'INITIALIZING']
+    volume = tree.find('geoRep/volume')
+    for session in volume.findall('sessions/session'):
+        sessionKey = session.find('session_slave').text
+        slave = sessionKey.split("::")[-1]
+        slaves[slave] = {'nodecount': 0,
+                         'faulty': 0,
+                         'notstarted': 0,
+                         'stopped': 0,
+                         'passive': 0,
+                         'detail': '',
+                         'status': GeoRepStatus.OK,
+                         'name': sessionKey.split(":", 1)[1]
+                         }
+        for pair in session.findall('pair'):
+            tempstatus = None
+            slaves[slave]['nodecount'] += 1
+            status = pair.find('status').text.upper()
+            if "FAULTY" in status:
+                slaves[slave]['faulty'] += 1
+                tempstatus = GeoRepStatus.FAULTY
+            elif "CREATED" in status:
+                slaves[slave]['notstarted'] += 1
+                tempstatus = GeoRepStatus.NOT_STARTED
+            elif "PASSIVE" in status:
+                slaves[slave]['passive'] += 1
+                tempstatus = "PASSIVE"
+            elif GeoRepStatus.STOPPED in status:
+                slaves[slave]['stopped'] += 1
+                tempstatus = GeoRepStatus.STOPPED
+            # elif not any(gstatus in status for gstatus in other_status):
+            elif status not in other_status:
+                tempstatus = status
+            if tempstatus:
+                slaves[slave]['detail'] += \
+                    ("%s:%s - %s;" %
+                     (pair.find('master_node').text,
+                      pair.find('master_brick').text,
+                      tempstatus))
+        if slaves[slave]['faulty'] > 0:
             if replicaCount > 1:
-                # georep cli status does not give the node name in the same
-                # way as gluster volume info - there's no way to compare and
-                # get the subvolume. So if fault+passive > than num of primary
-                # bricks, moving to faulty
-                if (count_dict['faulty'] + count_dict['passive']
-                        > count_dict['nodecount']/replicaCount):
+                # georep cli status does not give the
+                # node name in the same way as
+                # gluster volume info - there's no way
+                # to compare and get the
+                # subvolume. So if fault+passive >
+                # than num of primary bricks,
+                # moving to faulty
+                if (slaves[slave]['faulty'] + slaves[slave]['passive']
+                        > slaves[slave]['nodecount']/replicaCount):
                     slaves[slave]['status'] = GeoRepStatus.FAULTY
                 else:
                     slaves[slave]['status'] = GeoRepStatus.PARTIAL_FAULTY
             else:
                 slaves[slave]['status'] = GeoRepStatus.FAULTY
-        elif (count_dict['notstarted'] > 0 and
+        elif (slaves[slave]['notstarted'] > 0 and
               slaves[slave]['status'] == GeoRepStatus.OK):
             slaves[slave]['status'] = GeoRepStatus.NOT_STARTED
-        elif (count_dict['stopped'] > 0 and
+        elif (slaves[slave]['stopped'] > 0 and
               slaves[slave]['status'] == GeoRepStatus.OK):
             slaves[slave]['status'] = GeoRepStatus.STOPPED
+
     return {volumeName: {'slaves': slaves}}
 
 
@@ -611,12 +606,12 @@ def volumeGeoRepStatus(volumeName, remoteServer=None):
     command = _getGlusterVolCmd() + ["geo-replication", volumeName, "status"]
     if remoteServer:
         command += ['--remote-host=%s' % remoteServer]
+    xmltree = _execGlusterXml(command)
 
-    rc, out, err = _execGluster(command)
-
-    if rc == 0:
-        return _parseVolumeGeoRepStatus(volumeName, out)
-    raise GlusterCmdFailedException(rc=rc, out=out, err=err)
+    try:
+        return _parseVolumeGeoRepStatus(volumeName, xmltree)
+    except _etreeExceptions:
+        raise GlusterCmdFailedException(err=[etree.tostring(xmltree)])
 
 
 def volumeHealStatus(volumeName, remoteServer=None):

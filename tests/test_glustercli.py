@@ -1141,17 +1141,12 @@ class GlusterCliTests(TestCaseBase):
         print(status)
         self.assertEquals(status, expectedOut)
 
-    @mock.patch('glusternagios.utils.execCmd')
     @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
     @mock.patch('glusternagios.glustercli.volumeInfo')
     def test_getVolumeGeoRepStatus(self,
                                    mock_volumeInfo,
-                                   mock_glusterVolCmd,
-                                   mock_execCmd,):
+                                   mock_glusterVolCmd,):
         mock_glusterVolCmd.return_value = ["gluster", "volume"]
-        mock_execCmd.return_value = (0,
-                                     self.__getGlusterGeoRepStatusResult(),
-                                     None)
         mock_volumeInfo.return_value = {'test-vol':
                                         {'volumeType': 'REPLICATE',
                                          'replicaCount': 2,
@@ -1170,23 +1165,19 @@ class GlusterCliTests(TestCaseBase):
                                               'rhs3-2.novalocal:'
                                               '/bricks/b3 - FAULTY;',
                                     'status': gcli.GeoRepStatus.FAULTY,
-                                    'name': '10.70.43.68::slave-vol'}
+                                    'name': 'ssh://10.70.47.165::slave-vol'}
                                    }}}
-        status = gcli.volumeGeoRepStatus("test-vol")
+        tree = etree.fromstring(self.__getGlusterGeoRepStatusResult())
+        status = gcli._parseVolumeGeoRepStatus("test-vol", tree)
         print(status)
         self.assertEquals(status, expectedOut)
 
-    @mock.patch('glusternagios.utils.execCmd')
     @mock.patch('glusternagios.glustercli._getGlusterVolCmd')
     @mock.patch('glusternagios.glustercli.volumeInfo')
     def test_getVolumeGeoRepStatusMultiSlave(self,
                                              mock_volumeInfo,
-                                             mock_glusterVolCmd,
-                                             mock_execCmd,):
+                                             mock_glusterVolCmd,):
         mock_glusterVolCmd.return_value = ["gluster", "volume"]
-        mock_execCmd.return_value = (0,
-                                     self.__getGlusterGeoRepStatusResult2(),
-                                     None)
         mock_volumeInfo.return_value = {'test-vol':
                                         {'volumeType': 'REPLICATE',
                                          'replicaCount': 2,
@@ -1201,31 +1192,33 @@ class GlusterCliTests(TestCaseBase):
                           'notstarted': 0,
                           'stopped': 0,
                           'passive': 1,
-                          'detail': 'rhs3.novalocal:/bricks/b3 '
+                          'detail': 'casino-vm3.lab.eng.blr.redhat.com:'
+                                    '/bricks/b5 '
                                     '- PASSIVE;'
-                                    'rhs3-2.novalocal:/bricks/b3 '
+                                    'casino-vm4.lab.eng.blr.redhat.com:'
+                                    '/bricks/b5 '
                                     '- FAULTY;',
                           'status': gcli.GeoRepStatus.FAULTY,
-                          'name': '10.70.43.68::slave-vol'},
+                          'name': 'ssh://10.70.43.68::slave-vol'},
                          'slave-vol2':
                          {'faulty': 0,
                           'nodecount': 2,
                           'notstarted': 2,
                           'stopped': 0,
                           'passive': 0,
-                          'detail': 'rhs3.novalocal:/bricks/b3 '
+                          'detail': 'casino-vm3.lab.eng.blr.redhat.com:'
+                                    '/bricks/b5 '
                                     '- NOT_STARTED;'
-                                    'rhs3-2.novalocal:/bricks/b3 '
+                                    'casino-vm4.lab.eng.blr.redhat.com:'
+                                    '/bricks/b5 '
                                     '- NOT_STARTED;',
                           'status': gcli.GeoRepStatus.NOT_STARTED,
-                          'name': '10.70.43.68::slave-vol2'}
+                          'name': 'ssh://10.70.43.68::slave-vol2'}
                          }}}
-        status = gcli.volumeGeoRepStatus("test-vol")
+        tree = etree.fromstring(self.__getGlusterGeoRepStatusResult2())
+        status = gcli._parseVolumeGeoRepStatus("test-vol", tree)
         print(status)
         self.assertEquals(status, expectedOut)
-        mock_execCmd.return_value = (0,
-                                     self.__getGlusterGeoRepStatusResult3(),
-                                     None)
         expectedOut = {'test-vol':
                        {'slaves':
                         {'slave-vol':
@@ -1240,9 +1233,10 @@ class GlusterCliTests(TestCaseBase):
                                     '/bricks/b3 '
                                     '- NOT_STARTED;',
                           'status': gcli.GeoRepStatus.NOT_STARTED,
-                          'name': '10.70.43.68::slave-vol'
+                          'name': 'ssh://10.70.47.165::slave-vol'
                           }}}}
-        status = gcli.volumeGeoRepStatus("test-vol")
+        tree = etree.fromstring(self.__getGlusterGeoRepStatusResult3())
+        status = gcli._parseVolumeGeoRepStatus("test-vol", tree)
         print(status)
         self.assertEquals(status, expectedOut)
 
@@ -1279,52 +1273,132 @@ class GlusterCliTests(TestCaseBase):
                 "/dir.7/file.4"]
 
     def __getGlusterGeoRepStatusResult(self):
-        return ["   ",
-                "MASTER NODE                MASTER VOL    MASTER BRICK    "
-                "SLAVE                     STATUS     CHECKPOINT STATUS    "
-                "CRAWL STATUS",
-                "--------------------------------------------------------"
-                "--------------------------------------------------------"
-                "----------------",
-                "rhs3.novalocal      rep           /bricks/b3      "
-                "10.70.43.68::slave-vol    faulty    "
-                "N/A                  N/A",
-                "rhs3-2.novalocal    rep           /bricks/b3      "
-                "10.70.43.68::slave-vol    faulty     "
-                "N/A                  N/A "]
+        return """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cliOutput>
+  <opRet>0</opRet>
+  <opErrno>0</opErrno>
+  <opErrstr/>
+  <geoRep>
+    <volume>
+      <name>rep</name>
+      <sessions>
+        <session>
+          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:ssh://10.70.47.165::slave-vol</session_slave>
+          <pair>
+            <master_node>rhs3.novalocal</master_node>
+            <master_brick>/bricks/b3</master_brick>
+            <slave_user>root</slave_user>
+            <slave>ssh://10.70.47.165::slave-vol</slave>
+            <slave_node>N/A</slave_node>
+            <status>faulty</status>
+            <crawl_status>N/A</crawl_status>
+          </pair>
+          <pair>
+            <master_node>rhs3-2.novalocal</master_node>
+            <master_brick>/bricks/b3</master_brick>
+            <slave_user>root</slave_user>
+            <slave>ssh://10.70.47.165::slave-vol</slave>
+            <slave_node>N/A</slave_node>
+            <status>Faulty</status>
+            <crawl_status>N/A</crawl_status>
+          </pair>
+        </session>
+      </sessions>
+    </volume>
+  </geoRep>
+</cliOutput>
+"""
 
     def __getGlusterGeoRepStatusResult2(self):
-        return ["   ",
-                "MASTER NODE                MASTER VOL    MASTER BRICK    "
-                "SLAVE                     STATUS     CHECKPOINT STATUS    "
-                "CRAWL STATUS",
-                "--------------------------------------------------------"
-                "--------------------------------------------------------"
-                "----------------",
-                "rhs3.novalocal      rep           /bricks/b3      "
-                "10.70.43.68::slave-vol    Passive    "
-                "N/A                  N/A",
-                "rhs3-2.novalocal    rep           /bricks/b3      "
-                "10.70.43.69::slave-vol    faulty     "
-                "N/A                  N/A ",
-                "rhs3.novalocal      rep           /bricks/b3      "
-                "10.70.43.68::slave-vol2    Not Started    "
-                "N/A                  N/A",
-                "rhs3-2.novalocal    rep           /bricks/b3      "
-                "10.70.43.69::slave-vol2    Not Started     "
-                "N/A                  N/A "]
+        return """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cliOutput>
+  <opRet>0</opRet>
+  <opErrno>0</opErrno>
+  <opErrstr/>
+  <geoRep>
+    <volume>
+      <name>geo-rep-test</name>
+      <sessions>
+        <session>
+          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:ssh://10.70.43.68::slave-vol</session_slave>
+          <pair>
+            <master_node>casino-vm3.lab.eng.blr.redhat.com</master_node>
+            <master_brick>/bricks/b5</master_brick>
+            <slave_user>root</slave_user>
+            <slave>ssh://10.70.43.68::slave-vol</slave>
+            <slave_node>N/A</slave_node>
+            <status>PASSIVE</status>
+            <crawl_status>N/A</crawl_status>
+          </pair>
+          <pair>
+            <master_node>casino-vm4.lab.eng.blr.redhat.com</master_node>
+            <master_brick>/bricks/b5</master_brick>
+            <slave_user>root</slave_user>
+            <slave>ssh://10.70.43.68::slave-vol</slave>
+            <slave_node>N/A</slave_node>
+            <status>FAULTY</status>
+            <crawl_status>N/A</crawl_status>
+          </pair>
+        </session>
+        <session>
+          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:ssh://10.70.43.68::slave-vol2</session_slave>
+          <pair>
+            <master_node>casino-vm3.lab.eng.blr.redhat.com</master_node>
+            <master_brick>/bricks/b5</master_brick>
+            <slave_user>root</slave_user>
+            <slave>ssh://10.70.43.68::slave-vol2</slave>
+            <slave_node>N/A</slave_node>
+            <status>CREATED</status>
+            <crawl_status>N/A</crawl_status>
+          </pair>
+          <pair>
+            <master_node>casino-vm4.lab.eng.blr.redhat.com</master_node>
+            <master_brick>/bricks/b5</master_brick>
+            <slave_user>root</slave_user>
+            <slave>ssh://10.70.43.68::slave-vol2</slave>
+            <slave_node>N/A</slave_node>
+            <status>CREATED</status>
+            <crawl_status>N/A</crawl_status>
+          </pair>
+        </session>
+      </sessions>
+    </volume>
+  </geoRep>
+</cliOutput>"""
 
     def __getGlusterGeoRepStatusResult3(self):
-        return ["   ",
-                "MASTER NODE                MASTER VOL    MASTER BRICK    "
-                "SLAVE                     STATUS     CHECKPOINT STATUS    "
-                "CRAWL STATUS",
-                "--------------------------------------------------------"
-                "--------------------------------------------------------"
-                "----------------",
-                "rhs3.novalocal      rep           /bricks/b3      "
-                "10.70.43.68::slave-vol    Passive    "
-                "N/A                  N/A",
-                "rhs3-2.novalocal    rep           /bricks/b3      "
-                "10.70.43.68::slave-vol    Not Started     "
-                "N/A                  N/A "]
+        return """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cliOutput>
+  <opRet>0</opRet>
+  <opErrno>0</opErrno>
+  <opErrstr/>
+  <geoRep>
+    <volume>
+      <name>rep</name>
+      <sessions>
+        <session>
+          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:ssh://10.70.47.165::slave-vol</session_slave>
+          <pair>
+            <master_node>rhs3.novalocal</master_node>
+            <master_brick>/bricks/b3</master_brick>
+            <slave_user>root</slave_user>
+            <slave>ssh://10.70.47.165::slave-vol</slave>
+            <slave_node>N/A</slave_node>
+            <status>Passive</status>
+            <crawl_status>N/A</crawl_status>
+          </pair>
+          <pair>
+            <master_node>rhs3-2.novalocal</master_node>
+            <master_brick>/bricks/b3</master_brick>
+            <slave_user>root</slave_user>
+            <slave>ssh://10.70.47.165::slave-vol</slave>
+            <slave_node>N/A</slave_node>
+            <status>Created</status>
+            <crawl_status>N/A</crawl_status>
+          </pair>
+        </session>
+      </sessions>
+    </volume>
+  </geoRep>
+</cliOutput>
+"""
