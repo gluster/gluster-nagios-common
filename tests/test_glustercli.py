@@ -1320,7 +1320,8 @@ class GlusterCliTests(TestCaseBase):
       <name>geo-rep-test</name>
       <sessions>
         <session>
-          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:ssh://10.70.43.68::slave-vol</session_slave>
+          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:"""\
+              """ssh://10.70.43.68::slave-vol</session_slave>
           <pair>
             <master_node>casino-vm3.lab.eng.blr.redhat.com</master_node>
             <master_brick>/bricks/b5</master_brick>
@@ -1341,7 +1342,8 @@ class GlusterCliTests(TestCaseBase):
           </pair>
         </session>
         <session>
-          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:ssh://10.70.43.68::slave-vol2</session_slave>
+          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:"""\
+                """ssh://10.70.43.68::slave-vol2</session_slave>
           <pair>
             <master_node>casino-vm3.lab.eng.blr.redhat.com</master_node>
             <master_brick>/bricks/b5</master_brick>
@@ -1377,7 +1379,8 @@ class GlusterCliTests(TestCaseBase):
       <name>rep</name>
       <sessions>
         <session>
-          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:ssh://10.70.47.165::slave-vol</session_slave>
+          <session_slave>ce7387db-bff5-4719-bfdd-89736f5c15d2:"""\
+                """ssh://10.70.47.165::slave-vol</session_slave>
           <pair>
             <master_node>rhs3.novalocal</master_node>
             <master_brick>/bricks/b3</master_brick>
