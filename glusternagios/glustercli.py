@@ -524,6 +524,8 @@ def _parseVolumeGeoRepStatus(volumeName, tree):
         replicaCount = 1
     other_status = ['ACTIVE', 'INITIALIZING']
     volume = tree.find('geoRep/volume')
+    if volume is None:
+        return {volumeName: {'slaves': slaves}}
     for session in volume.findall('sessions/session'):
         sessionKey = session.find('session_slave').text
         slave = sessionKey.split("::")[-1]
